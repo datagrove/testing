@@ -1,5 +1,4 @@
 namespace Datagrove.Playwright;
-
 using System.Collections.ObjectModel;
 using System.Drawing;
 using System;
@@ -92,7 +91,7 @@ public class By
     {
         return !(one == two);
     }
-    public override bool Equals(object? obj)
+    public override bool Equals(object obj)
     {
         return description.Equals(obj);
     }

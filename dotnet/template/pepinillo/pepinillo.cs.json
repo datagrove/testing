@@ -1,0 +1,16 @@
+{
+  "feature": [
+    {
+      "path": "/Users/jim/dev/datagrove/testing/dotnet/template/pepinillo/feature/Calc.feature",
+      "source": "Feature: Calculator\n\n  Background: \n    Given I have a calculator\n\n  Scenario Outline: Add two numbers\n    Given I have 2 numbers \u003Ca\u003E and \u003Cb\u003E as input\n    When I add these 2 numbers\n    And I add more numbers\n      | number |\n      |      1 |\n      |      2 |\n    Then I should get an output of \u003Cc\u003E\n\n    Examples: \n      | a | b | c |\n      | 1 | 2 | 3 |\n      | 2 | 3 | 5 |\n",
+      "qualified_name": "As1.pepin.Calculator",
+      "background": [],
+      "scenario": [
+        {
+          "name": "Add_two_numbers",
+          "step": []
+        }
+      ]
+    }
+  ]
+}

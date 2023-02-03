@@ -5,6 +5,13 @@ using System.Text.Json;
 // defines a model for dumping compiler collected info for later display in the results package
 public class PepinilloConfig
 {
+    public string baseTest { get; set; } = "";
+    public string context { get;set;} = "";
+
+    // AOT dependency injection; we need to know what names can be injected and how to instantiate them
+
+
+    
     public Dictionary<string, FeatureSpace> space { set; get; } = new();
 }
 public class FeatureSpace

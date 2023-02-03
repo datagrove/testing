@@ -1,6 +1,6 @@
 # IMPORTANT LICENSE NOTE
 
- Selenium here is hacked to pieces, but there is still lots of code in the Selenium folder here that is not our copyright and used under the Apache license. Please consider that you are using this code under the (compatible) terms of the ISC license from Datagrove and the Apache License from the Selenium authors.
+ Selenium here is hacked to pieces, but there is still lots of code here that is not our copyright and used under the Apache license. Please consider that you are using this code under the (compatible) terms of the ISC license from Datagrove and the Apache License from the Selenium authors.
 
  The Selenium license is repeated below
 

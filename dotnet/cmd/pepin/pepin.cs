@@ -26,26 +26,11 @@ class Program
             },
             verboseOption);
 
-        var initCommand = new Command("init", "Initialize pepin")
-            {
-                verboseOption,
-            };
-        rootCommand.AddCommand(initCommand);
-
-        initCommand.SetHandler(async (verbose) =>
-            {
-                await Init(verbose);
-            },
-            verboseOption);
 
 
         return rootCommand.InvokeAsync(args).Result;
     }
-    internal static async Task Init(bool verbose)
-    {
-        await Datagrove.Pep.Pepin.init(Directory.GetCurrentDirectory());
 
-    }
     internal static async Task Build(bool verbose)
     {
         await Datagrove.Pep.Pepin.build(Directory.GetCurrentDirectory());

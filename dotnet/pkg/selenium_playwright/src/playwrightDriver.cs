@@ -33,15 +33,6 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     public object? rvalue = null;
     public IElementHandle? current = null;
 
-
-    // build a new driver from the proxy. not a root and dies when  the root dies
-    // public PlaywrightDriver(PlaywrightDriver toCopy)
-    // {
-    //     this.proxy = toCopy.proxy;
-    //     this.isRoot = false;
-    //     this.page = toCopy.page;
-    //     this.page = toCopy.page;
-    // }
     public PlaywrightDriver(PlaywrightOptions? options = null)
     {
         isRoot = true;

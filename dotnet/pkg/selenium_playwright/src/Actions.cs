@@ -67,24 +67,24 @@ public class Actions
     public Actions KeyDown(string theKey)
     {
         throw new NotImplementedException();
-        return this;
+
     }
     public Actions KeyDown(IWebElement element, string theKey)
     {
         throw new NotImplementedException();
-        return this;
+
     }
 
     public Actions KeyUp(string theKey)
     {
         throw new NotImplementedException();
-        return this;
+ 
     }
 
     public Actions KeyUp(IWebElement element, string theKey)
     {
         throw new NotImplementedException();
-        return this;
+
     }
 
     public Actions SendKeys(string keysToSend)
@@ -114,25 +114,25 @@ public class Actions
     public Actions ClickAndHold(IWebElement onElement)
     {
         throw new NotImplementedException(); throw new NotImplementedException();
-        return this;
+      
     }
 
     public Actions ClickAndHold()
     {
         throw new NotImplementedException();
-        return this;
+       
     }
 
     public Actions Release(IWebElement onElement)
     {
         throw new NotImplementedException();
-        return this;
+       
     }
 
     public Actions Release()
     {
         throw new NotImplementedException();
-        return this;
+       
     }
 
 
@@ -214,7 +214,6 @@ public class Actions
     public Actions ContextClick()
     {
         throw new NotImplementedException();
-        return this;
     }
 
 
@@ -238,7 +237,7 @@ public class Actions
     public Actions DragAndDropToOffset(IWebElement source, int offsetX, int offsetY)
     {
         throw new NotImplementedException();
-        return this;
+     
     }
 
 
@@ -257,19 +256,19 @@ public class Actions
     {
         ;
         throw new NotImplementedException();
-        return this;
+   
     }
 
     public Actions ScrollFromOrigin(ScrollOrigin scrollOrigin, int deltaX, int deltaY)
     {
         throw new NotImplementedException();
 
-        return this;
+       
     }
     public Actions Pause(TimeSpan duration)
     {
         throw new NotImplementedException();
-        return this;
+      
     }
 }
 
@@ -514,7 +513,7 @@ public class PointerInputDevice : InputDevice
             throw new ArgumentException("Using a value of CoordinateOrigin.Element without an element is not supported.", nameof(origin));
         }
 
-        return new PointerMoveInteraction(this, null, origin, xOffset, yOffset, duration, properties);
+        return new PointerMoveInteraction(this, null!, origin, xOffset, yOffset, duration, properties);
     }
 
 
@@ -619,6 +618,7 @@ class PointerUpInteraction : Interaction
         : base(sourceDevice)
     {
         this.button = button;
+        this.eventProperties = properties;
     }
 
     public override string ToString()
@@ -641,7 +641,7 @@ class PointerCancelInteraction : Interaction
 }
 class PointerMoveInteraction : Interaction
 {
-    private IWebElement target;
+    private IWebElement? target;
     private int x = 0;
     private int y = 0;
     private TimeSpan duration = TimeSpan.MinValue;
@@ -679,7 +679,7 @@ class PointerMoveInteraction : Interaction
         string originDescription = this.origin.ToString();
         if (this.origin == CoordinateOrigin.Element)
         {
-            originDescription = this.target.ToString();
+            originDescription = this.target?.ToString()??"";
         }
 
         return string.Format(CultureInfo.InvariantCulture, "Pointer move [origin: {0}, x offset: {1}, y offset: {2}, duration: {3}ms]", originDescription, this.x, this.y, this.duration.TotalMilliseconds);
@@ -709,7 +709,7 @@ public class WheelInputDevice : InputDevice
 
     public Interaction CreateWheelScroll(int deltaX, int deltaY, TimeSpan duration)
     {
-        return new WheelScrollInteraction(this, null, CoordinateOrigin.Viewport, 0, 0, deltaX, deltaY, duration);
+        return new WheelScrollInteraction(this, null!, CoordinateOrigin.Viewport, 0, 0, deltaX, deltaY, duration);
     }
 
     public Interaction CreateWheelScroll(IWebElement target, int xOffset, int yOffset, int deltaX, int deltaY, TimeSpan duration)
@@ -719,18 +719,18 @@ public class WheelInputDevice : InputDevice
 
     public Interaction CreateWheelScroll(CoordinateOrigin origin, int xOffset, int yOffset, int deltaX, int deltaY, TimeSpan duration)
     {
-        return new WheelScrollInteraction(this, null, origin, xOffset, yOffset, deltaX, deltaY, duration);
+        return new WheelScrollInteraction(this, null!, origin, xOffset, yOffset, deltaX, deltaY, duration);
     }
 }
 
 public class ScrollOrigin
 {
-    private IWebElement element;
+    private IWebElement? element;
     private bool viewport;
     private int xOffset = 0;
     private int yOffset = 0;
 
-    public IWebElement Element
+    public IWebElement? Element
     {
         get { return this.element; }
         set { this.element = value; }

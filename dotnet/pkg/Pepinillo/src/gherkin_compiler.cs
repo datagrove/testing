@@ -17,17 +17,10 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 // list of assemblies instead of one?
 public class Pepin
 {
-    public static async Task init(string path)
-    {
-        await RunAsync("dotnet", "build");
-    }
 
-    public static Assembly? assemblyFromDirectory(string dir)
-    {
-        // find a csproj file, build it.
-        string csproj = "";
+    static public string findFirstFile(string dir, string pattern){
         var matcher = new Matcher();
-        matcher.AddInclude("**/src/**/*.cs");
+        matcher.AddInclude(pattern);
         var di = new DirectoryInfo(dir);
         var result = matcher.Execute(new DirectoryInfoWrapper(di));
         if (result.HasMatches)
@@ -36,14 +29,18 @@ public class Pepin
             {
                 if (f.Path.EndsWith(".csproj"))
                 {
-                    csproj = f.Path;
-                    break;
+                    return f.Path;
+
                 }
             }
         }
-        SimpleExec.Command.Run("dotnet", "build " + csproj);
-        var fn = csproj.Split("/").Last().Split(".").First();
-        var asm = Assembly.LoadFrom($"{dir}/bin/Debug/net7.0/{fn}.dll");
+        return "";
+    }
+    public static Assembly? assemblyFromDirectory(string dir)
+    {
+        var cmd = $"build \"{dir}/steps/steps.csproj\"";
+        SimpleExec.Command.Run("dotnet", cmd);
+        var asm = Assembly.LoadFrom($"{dir}/steps/bin/Debug/net7.0/steps.dll");
         return asm;
     }
     public static async Task build(string path)
@@ -65,15 +62,20 @@ public class Pepin
         catch (Exception) { }
 
         // var o = JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true });
-        if (s == null || s.space == null || s.space.Count() == 0)
+        if (s == null)
         {
+            // no config, use defaults
             new BuildGherkin(a).config(path).build();
         }
         else
         {
-            foreach (var e in s.space)
-            {
-                new BuildGherkin(a).config(path, e.Key, e.Value).build();
+            if ( s.space == null || s.space.Count() == 0){
+                new BuildGherkin(a).config(path, s).build();
+            } else {
+                foreach (var e in s.space)
+                {
+                    new BuildGherkin(a).config(path, s, e.Key, e.Value).build();
+                }
             }
         }
     }
@@ -338,8 +340,9 @@ public class GherkinCompiler
 // {file}
 [TestClass()]
 {category}
-{tags}public class {name} : BaseTest
+{tags}public class {name} {bg.baseTest}
 {{
+    public TestContext? TestContext {{ get; set; }}
     {stepDef}
     {baseTextWriter.ToString()}
     {debugInfo}
@@ -418,6 +421,8 @@ public class BuildGherkin
     public string[] featureFolder = new string[] { };
     public string outputFile = "";
 
+    public string baseTest = "";
+
     public BuildGherkin(Assembly[] assembly)
     {
         this.assembly = assembly;
@@ -426,17 +431,26 @@ public class BuildGherkin
     public string tag = "pepin";
     public string root { get; set; } = ".";
 
+    PepinilloConfig? cfg;
 
+    string container { get;set;} = "";
 
-    public BuildGherkin config(string root)
+    public BuildGherkin config(string root, PepinilloConfig? cfg=null)
     {
         this.root = root;
+        this.cfg = cfg;
+        this.baseTest = cfg?.baseTest ?? "";
+        this.container = cfg?.context ?? "Context";
+        if (baseTest!="")
+        {
+            baseTest = ": " + baseTest;
+        }
         this.outputFile = root + "/pepinillo.cs";
         return this;
     }
-    public BuildGherkin config(string root, string name, FeatureSpace config)
+    public BuildGherkin config(string root, PepinilloConfig cfg,  string name, FeatureSpace config)
     {
-        this.config(root);
+        this.config(root,cfg);
         this.root = root;
         outputFile = config.outputFile ?? this.outputFile;
         tag = name;
@@ -448,10 +462,9 @@ public class BuildGherkin
 
     public void build()
     {
-
         if (featureFolder.Count() == 0)
         {
-            featureFolder = new string[] { Directory.GetCurrentDirectory() };
+            featureFolder = new string[] { root};
         }
         var sb = new StringBuilder();
         var log = new StringBuilder();
