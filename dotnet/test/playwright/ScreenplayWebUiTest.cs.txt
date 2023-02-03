@@ -1,0 +1,90 @@
+﻿using Boa.Constrictor.Screenplay;
+using Boa.Constrictor.Playwright;
+using FluentAssertions;
+using Microsoft.Playwright;
+using Datagrove.Playwright;
+using static Boa.Constrictor.Playwright.WebLocator;
+
+namespace Boa.Constrictor.Example;
+
+// this example doesn't work any more, duckduckgo has changed their search pages
+
+
+[TestClass]
+public class ScreenplayWebUiTest
+{
+    private IActor Actor;
+
+    [TestInitialize]
+    public void InitializeBrowser()
+    {
+        var options = new pw1.PlaywrightOptions(pw1.BrowserType.Chrome, new BrowserTypeLaunchOptions
+        {
+            Headless = false
+        }, new BrowserNewContextOptions
+        {
+            ViewportSize = new ViewportSize
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            RecordVideoDir = "videos"
+        });
+        var driver = new pw1.PlaywrightDriver(options);
+        Actor = new Actor(name: "Andy", logger: new ConsoleLogger());
+        Actor.Can(BrowseTheWeb.With(driver));
+    }
+
+    [TestCleanup]
+    public void QuitBrowser()
+    {
+        Actor.AttemptsTo(QuitWebDriver.ForBrowser());
+    }
+
+    [TestMethod]
+    public void TestDuckDuckGoWebSearch()
+    {
+        Actor.AttemptsTo(Navigate.ToUrl(SearchPage.Url));
+        Actor.AskingFor(ValueAttribute.Of(SearchPage.SearchInput)).Should().BeEmpty();
+        Actor.AttemptsTo(SearchDuckDuckGo.For("panda"));
+        Actor.WaitsUntil(Appearance.Of(ResultPage.ResultLinks), IsEqualTo.True());
+    }
+}
+
+
+public class SearchDuckDuckGo : ITask
+{
+    public string Phrase { get; }
+
+    private SearchDuckDuckGo(string phrase) =>
+      Phrase = phrase;
+
+    public static SearchDuckDuckGo For(string phrase) =>
+      new SearchDuckDuckGo(phrase);
+
+    public void PerformAs(IActor actor)
+    {
+        actor.AttemptsTo(SendKeys.To(SearchPage.SearchInput, Phrase));
+        actor.AttemptsTo(Click.On(SearchPage.SearchButton));
+    }
+}
+public static class ResultPage
+{
+    public static IWebLocator ResultLinks => L(
+      "DuckDuckGo Result Page Links",
+      By.ClassName("result__a"));
+}
+
+public static class SearchPage
+{
+    public const string Url = "https://www.duckduckgo.com/";
+
+    public static IWebLocator SearchButton => L(
+      "DuckDuckGo Search Button",
+      By.Id("search_button_homepage"));
+
+    public static IWebLocator SearchInput => L(
+      "DuckDuckGo Search Input",
+      By.Id("searchbox_input"));
+}
+
