@@ -1,6 +1,6 @@
 
 # source
-this folder mostly copied directly 
+this folder mostly copied directly from Boa Constrictor with changes to the namespaces. No additional copyright is claimed on this code; all rights remain with the Boa Constrictor authors.
 
 ---
 
