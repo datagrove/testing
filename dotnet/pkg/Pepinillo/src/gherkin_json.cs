@@ -2,6 +2,18 @@ namespace Datagrove.Pep;
 
 using System.Text.Json;
 
+// defines a model for dumping compiler collected info for later display in the results package
+public class PepinilloConfig
+{
+    public Dictionary<string, FeatureSpace> space { set; get; } = new();
+}
+public class FeatureSpace
+{
+    public string? outputFile { get; set; }
+    public List<string> features { get; set; } = new();
+
+    public List<string> steps { get; set; } = new();
+}
 
 public class GherkinFeature
 {

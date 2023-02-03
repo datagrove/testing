@@ -6,10 +6,78 @@ using System.Reflection;
 using System.Text;
 using Gherkin.Ast;
 
-
 using Compiled = System.Action<string, string, string>;
 using System.CodeDom.Compiler;
+using Microsoft.Extensions.FileSystemGlobbing;
+using System.Text.Json;
+using static SimpleExec.Command;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
+// reuse builder so not reloading assembly?
+// list of assemblies instead of one?
+public class Pepin
+{
+    public static async Task init(string path)
+    {
+        await RunAsync("dotnet", "build");
+    }
+
+    public static Assembly? assemblyFromDirectory(string dir)
+    {
+        // find a csproj file, build it.
+        string csproj = "";
+        var matcher = new Matcher();
+        matcher.AddInclude("**/src/**/*.cs");
+        var di = new DirectoryInfo(dir);
+        var result = matcher.Execute(new DirectoryInfoWrapper(di));
+        if (result.HasMatches)
+        {
+            foreach (var f in result.Files)
+            {
+                if (f.Path.EndsWith(".csproj"))
+                {
+                    csproj = f.Path;
+                    break;
+                }
+            }
+        }
+        SimpleExec.Command.Run("dotnet", "build " + csproj);
+        var fn = csproj.Split("/").Last().Split(".").First();
+        var asm = Assembly.LoadFrom($"{dir}/bin/Debug/net7.0/{fn}.dll");
+        return asm;
+    }
+    public static async Task build(string path)
+    {
+        var amaybe = assemblyFromDirectory(path);
+        if (amaybe == null)
+        {
+            Console.WriteLine("no assembly found");
+            return;
+        }
+        var a = new Assembly[] { amaybe };
+
+        PepinilloConfig? s = null;
+        try
+        {
+            using FileStream stream = File.OpenRead(path + "/pepin.config.json");
+            s = await JsonSerializer.DeserializeAsync<PepinilloConfig>(stream);
+        }
+        catch (Exception) { }
+
+        // var o = JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true });
+        if (s == null || s.space == null || s.space.Count() == 0)
+        {
+            new BuildGherkin(a).config(path).build();
+        }
+        else
+        {
+            foreach (var e in s.space)
+            {
+                new BuildGherkin(a).config(path, e.Key, e.Value).build();
+            }
+        }
+    }
+}
 
 // each step is part of a class that will get initialized
 // [Scope("gherkin_tag")]
@@ -101,7 +169,7 @@ public class GherkinCompiler
             var comments = doc.Comments;
             var children = doc.Feature.Children;
             var nmr = new Namer();
-            bool isBackground = false;
+
             // each step has a class and we need to collect them to add them as members to the class.
             var stepClass = new HashSet<string>();
             var appendStep = (Step step, string text, IndentedTextWriter tw) =>
@@ -135,7 +203,6 @@ public class GherkinCompiler
                 }
                 else if (ch is Background background)
                 {
-                    isBackground = true;
                     // we need to gather the steps, treat as a subroutine or macro expansion? if it's a subroutine, how do we share the context? It's class wide anyway.
                     // there are no examples in background steps.            
                     foreach (var st in background.Steps)
@@ -235,8 +302,6 @@ public class GherkinCompiler
                 }
             }
 
-
-
             var member = "";
             var featureConstructor = "";
             foreach (var cn in stepClass)
@@ -291,10 +356,13 @@ public class GherkinCompiler
 
     public StepSet ss;
 
-    public GherkinCompiler(string[] stepSpace, Assembly? prog = null)
+    public GherkinCompiler(string[] stepSpace, Assembly[] prog)
     {
-
-        ss = new StepSet(prog ?? System.Reflection.Assembly.GetExecutingAssembly(), stepSpace);
+        if (prog.Count() == 0)
+        {
+            prog = new Assembly[] { System.Reflection.Assembly.GetExecutingAssembly() };
+        }
+        ss = new StepSet(prog, stepSpace);
     }
 
     // we should also give this a set of assemblies
@@ -345,17 +413,46 @@ public class GherkinCompiler
 // Gherkin doesn't natively understand namespaces, so we need to add some additional information about what types are useful for a given feature folder.
 public class BuildGherkin
 {
-    public Assembly? assembly = null;
+    public Assembly[] assembly;
     public string[] stepSpace = new string[] { };
     public string[] featureFolder = new string[] { };
     public string outputFile = "";
 
+    public BuildGherkin(Assembly[] assembly)
+    {
+        this.assembly = assembly;
+    }
 
-    public string tag = "";
+    public string tag = "pepin";
+    public string root { get; set; } = ".";
+
+
+
+    public BuildGherkin config(string root)
+    {
+        this.root = root;
+        this.outputFile = root + "/pepinillo.cs";
+        return this;
+    }
+    public BuildGherkin config(string root, string name, FeatureSpace config)
+    {
+        this.config(root);
+        this.root = root;
+        outputFile = config.outputFile ?? this.outputFile;
+        tag = name;
+        stepSpace = config.steps.ToArray();
+        featureFolder = config.features.ToArray();
+
+        return this;
+    }
 
     public void build()
     {
 
+        if (featureFolder.Count() == 0)
+        {
+            featureFolder = new string[] { Directory.GetCurrentDirectory() };
+        }
         var sb = new StringBuilder();
         var log = new StringBuilder();
         var errors = new HashSet<string>();
@@ -371,14 +468,15 @@ public class BuildGherkin
 
         var c = new GherkinCompiler(stepSpace, assembly);
         var fl = c.findFeatures(featureFolder);
+        Console.Write($"{fl.Count()} feature files.");
         var doc = c.compile(compiled, fl, this);
 
         // not needed because we use fully qualified
         // + c.ss.usingText() 
 
-        File.WriteAllText(outputFile, $@"// File generated by Datagrove Gherkin Compiler, If you edit this file, rename it and/or delete the .feature file that generates it.
+        File.WriteAllText(outputFile, $@"// File generated by Pepinillo, If you edit this file, rename it and/or delete the .feature file that generates it.
 
-namespace As1.{tag};
+namespace {tag};
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 " + sb.ToString());

@@ -74,51 +74,56 @@ public class StepSet
         return name;
     }
 
-    public StepSet(Assembly prog, string[] stepSpace)
+    public StepSet(Assembly[] progx, string[] stepSpace)
     {
         // we ignore any type if it isn't in one of the  namespaces
-        foreach (var t in prog.GetTypes())
-        {
-            var ca = (BindingAttribute?)t.GetCustomAttribute(typeof(BindingAttribute), false);
-            if (ca == null) continue;
-
-            var match = false;
-            var sp = t.Namespace ?? "";
-            int priority = 0;
-            foreach (var o in stepSpace)
+        foreach (var prog in progx)
+            foreach (var t in prog.GetTypes())
             {
-                if (sp.StartsWith(o + "."))
+                var ca = (BindingAttribute?)t.GetCustomAttribute(typeof(BindingAttribute), false);
+                if (ca == null) continue;
+
+                int priority = 0;
+                if (stepSpace.Count() != 0)
                 {
-                    match = true;
-                    break;
+                    var match = false;
+                    var sp = t.Namespace ?? "";
+
+                    foreach (var o in stepSpace)
+                    {
+                        if (sp.StartsWith(o + "."))
+                        {
+                            match = true;
+                            break;
+                        }
+                        priority++;
+                    }
+                    if (!match) continue;
                 }
-                priority++;
+                var sn = shortName(t.FullName ?? t.Name, t.Name);
+
+                if (t.Namespace != null)
+                    usingNs.Add(t.Namespace);
+
+                foreach (var m in t.GetMethods())
+                {
+                    foreach (var tc in m.GetCustomAttributes(typeof(StepDefinitionBaseAttribute), false))
+                    {
+                        var tcx = (StepDefinitionBaseAttribute)tc;
+                        var mch = tcx.Regex ?? m.Name.Replace('_', ' ');
+                        allSteps.Add(new GherkinStep(t, this, m, sn, mch, priority));
+                        break; // often we have when/then/given variants
+                    }
+                    foreach (var tc in m.GetCustomAttributes(typeof(StepArgumentTransformationAttribute), false))
+                    {
+                        var o = t.GetConstructor(new Type[] { });
+                        var o2 = o?.Invoke(null);
+                        var tcx = (StepArgumentTransformationAttribute)tc;
+                        transforms.Add(new TransformArg(tcx.Regex, o2!, m));
+                    }
+                }
+
             }
-            if (!match) continue;
-            var sn = shortName(t.FullName ?? t.Name, t.Name);
-
-            if (t.Namespace != null)
-                usingNs.Add(t.Namespace);
-
-            foreach (var m in t.GetMethods())
-            {
-                foreach (var tc in m.GetCustomAttributes(typeof(StepDefinitionBaseAttribute), false))
-                {
-                    var tcx = (StepDefinitionBaseAttribute)tc;
-                    var mch = tcx.Regex ?? m.Name.Replace('_', ' ');
-                    allSteps.Add(new GherkinStep(t, this, m, sn, mch, priority));
-                    break; // often we have when/then/given variants
-                }
-                foreach (var tc in m.GetCustomAttributes(typeof(StepArgumentTransformationAttribute), false))
-                {
-                    var o = t.GetConstructor(new Type[] { });
-                    var o2 = o?.Invoke(null);
-                    var tcx = (StepArgumentTransformationAttribute)tc;
-                    transforms.Add(new TransformArg(tcx.Regex, o2!, m));
-                }
-            }
-
-        }
         allSteps.Sort((a, b) => a.priority - b.priority);
     }
     public string usingText()

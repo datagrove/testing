@@ -1,21 +1,20 @@
-﻿using System;
-using System.CommandLine;
+﻿using System.CommandLine;
 
-namespace pepin;
+namespace Pepin;
 
 class Program
 {
-    static int Main(string[] args)
+    public static int Main(string[] args)
     {
         var verboseOption = new Option<bool>(
             name: "--verbose",
             description: "log verbosely");
 
 
-        var rootCommand = new RootCommand("Sample app for System.CommandLine");
+        var rootCommand = new RootCommand("Pepin compiler for Cucumber language");
         //rootCommand.AddOption(fileOption);
 
-        var buildCommand = new Command("read", "Read and display the file.")
+        var buildCommand = new Command("build", "Compile cucumber into c#")
             {
                 verboseOption,
             };
@@ -27,11 +26,28 @@ class Program
             },
             verboseOption);
 
+        var initCommand = new Command("init", "Initialize pepin")
+            {
+                verboseOption,
+            };
+        rootCommand.AddCommand(initCommand);
+
+        initCommand.SetHandler(async (verbose) =>
+            {
+                await Init(verbose);
+            },
+            verboseOption);
+
+
         return rootCommand.InvokeAsync(args).Result;
     }
+    internal static async Task Init(bool verbose)
+    {
+        await Datagrove.Pep.Pepin.init(Directory.GetCurrentDirectory());
 
+    }
     internal static async Task Build(bool verbose)
     {
-        Console.WriteLine("Hello World!");
+        await Datagrove.Pep.Pepin.build(Directory.GetCurrentDirectory());
     }
 }

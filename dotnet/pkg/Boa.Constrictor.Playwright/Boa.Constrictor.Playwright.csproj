@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\playwright_driver\playwright_driver.csproj" />
+    <ProjectReference Include="..\selenium_playwright\selenium_playwright.csproj" />
   </ItemGroup>
 
   <ItemGroup>
