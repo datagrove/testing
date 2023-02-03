@@ -22,3 +22,6 @@ By default compiles all the tests into a single output file and uses steps in ev
 }
 ```
 
+# Why?
+
+Unlike Specflow which acts like an interpreter for your gherkin code, pepin build will convert your feature files to generated c# code that fits whatever automated process you want. It will be faster (how much faster depends a lot on the test).
