@@ -8,8 +8,9 @@ using TechTalk.SpecFlow;
 // using reflection we don't get the file name, change to code generation?
 public class StepSet
 {
-    public List<GherkinStep> allSteps = new List<GherkinStep>();
-    List<TransformArg> transforms = new List<TransformArg>();
+    public List<GherkinStep> allSteps = new();
+    public List<GherkinStep> stubSteps = new();
+    List<TransformArg> transforms = new();
 
     // the json will create something the publisher can use to describe the classes.
     public string text()
@@ -223,10 +224,13 @@ public class StepSet
         }
 
         var n = step.className.Substring(0, 1).ToLower() + step.className.Substring(1);
-        stmt += n + "." + step.m.Name + "(" + String.Join(",", args) + ");\n";
+        stmt += "await " + n + "." + step.m.Name + "(" + String.Join(",", args) + ");\n";
 
         return stmt;
     }
+
+    // we need to build a stub for each step that doesn't match
+    // should these go in a different namespace though? what namespace?
     // we have "overloaded" steps that match on type as well as on the regex.
     public CompiledStep? compile(Step s, string text, Action<string> warning)
     {
@@ -254,8 +258,20 @@ public class StepSet
                 b.Append($"```\n{stx.step.errorDescription()}\n```\n");
             }
             warning(b.ToString());
+            return step.First();
+        } else {
+            return null;
+
+            /* TODO!!
+            // add s step that matches and return it 
+            var st = new GherkinStep();
+            var ct = new CompiledStep(st, s, text, "");
+
+            stubSteps.Add(st);
+            allSteps.Add(st);
+            return ct; */
         }
-        return step.Count() > 0 ? step.First() : null;
+        
     }
 
 }

@@ -5,6 +5,7 @@ using Gherkin;
 using System.Reflection;
 using System.Text;
 using Gherkin.Ast;
+using System.IO;
 
 using Compiled = System.Action<string, string, string>;
 using System.CodeDom.Compiler;
@@ -38,9 +39,11 @@ public class Pepin
     }
     public static Assembly? assemblyFromDirectory(string dir)
     {
-        var cmd = $"build \"{dir}/steps/steps.csproj\"";
+        var csproj = findFirstFile(dir, "*.csproj");
+        var cmd = $"build \"{dir}/{csproj}\"";
         SimpleExec.Command.Run("dotnet", cmd);
-        var asm = Assembly.LoadFrom($"{dir}/steps/bin/Debug/net7.0/steps.dll");
+        var fn = cmd.Split('/').Last().Split('.').First();
+        var asm = Assembly.LoadFrom($"{dir}/bin/Debug/net7.0/{fn}.dll");
         return asm;
     }
     public static async Task build(string path)
@@ -61,20 +64,26 @@ public class Pepin
         }
         catch (Exception) { }
 
+        // create the compiled project
+        var stem = Path.GetFileNameWithoutExtension(path);
+        var outdir = $"{path}/../{stem}_aot";
+        Directory.CreateDirectory(outdir);
+  
+
         // var o = JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true });
         if (s == null)
         {
             // no config, use defaults
-            new BuildGherkin(a).config(path).build();
+            new BuildGherkin(a).config(path,outdir).build();
         }
         else
         {
             if ( s.space == null || s.space.Count() == 0){
-                new BuildGherkin(a).config(path, s).build();
+                new BuildGherkin(a).config(path, outdir, s).build();
             } else {
                 foreach (var e in s.space)
                 {
-                    new BuildGherkin(a).config(path, s, e.Key, e.Value).build();
+                    new BuildGherkin(a).config(path,outdir, s, e.Key, e.Value).build();
                 }
             }
         }
@@ -149,6 +158,7 @@ public class GherkinCompiler
 {
     public static void compile(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
     {
+        var StepState = "StepState";
         var parser = new Parser();
         try
         {
@@ -250,9 +260,9 @@ public class GherkinCompiler
                     {
                         var suffix = exn == 0 ? "" : $"__{exn}";
                         methods.WriteLine($"[TestMethod()]");
-                        methods.WriteLine($"public void {sname}{suffix}()");
+                        methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
-                        methods.WriteLine("using (var actor = new AsiTest(TestContext!,\"actor\")){");
+                        methods.WriteLine("await using (var actor = new {StepState}(TestContext!)){");
                         methods.Indent++;
                         methods.WriteLine("var step = new Steps(actor);");
                         foreach (var st in scenario.Steps)
@@ -322,10 +332,12 @@ public class GherkinCompiler
                 }
             }
 
+
+
             var stepDef = @$"
     public class Steps {{
 {member}
-        public Steps(AsiTest actor)
+        public Steps({StepState} actor)
         {{
 {featureConstructor}
             var step=this;
@@ -430,12 +442,13 @@ public class BuildGherkin
 
     public string tag = "pepin";
     public string root { get; set; } = ".";
+    public string outdir {get;set;} = ".";
 
     PepinilloConfig? cfg;
 
     string container { get;set;} = "";
 
-    public BuildGherkin config(string root, PepinilloConfig? cfg=null)
+    public BuildGherkin config(string root,string outdir, PepinilloConfig? cfg=null)
     {
         this.root = root;
         this.cfg = cfg;
@@ -445,12 +458,12 @@ public class BuildGherkin
         {
             baseTest = ": " + baseTest;
         }
-        this.outputFile = root + "/pepinillo.cs";
+        this.outputFile = outdir + "/pepinillo.cs";
         return this;
     }
-    public BuildGherkin config(string root, PepinilloConfig cfg,  string name, FeatureSpace config)
+    public BuildGherkin config(string root,string outdir, PepinilloConfig cfg,  string name, FeatureSpace config)
     {
-        this.config(root,cfg);
+        this.config(root,outdir, cfg);
         this.root = root;
         outputFile = config.outputFile ?? this.outputFile;
         tag = name;

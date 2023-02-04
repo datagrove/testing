@@ -12,7 +12,7 @@
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/dotnet/cmd/pepin/bin/Debug/net7.0/pepin.dll",
             "args": ["build"],
-            "cwd": "${workspaceFolder}/dotnet/template/pepinillo",
+            "cwd": "${workspaceFolder}/dotnet/template/pepin_simple",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

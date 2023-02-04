@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{DF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pepin_simple", "template\pepin_simple\pepin_simple.csproj", "{F2D8A84E-2A9C-49B0-BA2C-CCD25C7CA83E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pepin_simple_aot", "template\pepin_simple_aot\pepin_simple_aot.csproj", "{6A568396-F64B-46AF-9C66-9A9D0B253BEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{F2D8A84E-2A9C-49B0-BA2C-CCD25C7CA83E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2D8A84E-2A9C-49B0-BA2C-CCD25C7CA83E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2D8A84E-2A9C-49B0-BA2C-CCD25C7CA83E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A568396-F64B-46AF-9C66-9A9D0B253BEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A568396-F64B-46AF-9C66-9A9D0B253BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A568396-F64B-46AF-9C66-9A9D0B253BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A568396-F64B-46AF-9C66-9A9D0B253BEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{89CF6C5D-05A9-40ED-8087-FB265869D1A4} = {EF081C5B-3EB7-4793-A3B4-500BB9EB31F1}
@@ -64,5 +70,6 @@ Global
 		{E42E56E8-0B1A-4FB0-92E0-F7444217222D} = {241E2334-DB9D-410E-85B6-EB1CFF98B1F3}
 		{C9200CC8-F202-4134-BEF0-4C8893AEB0E1} = {2E3A58FA-9A8C-4FC2-A2BC-D756D40764DF}
 		{F2D8A84E-2A9C-49B0-BA2C-CCD25C7CA83E} = {DF44D89D-7A5E-4452-BCE2-37FDDF71E945}
+		{6A568396-F64B-46AF-9C66-9A9D0B253BEA} = {DF44D89D-7A5E-4452-BCE2-37FDDF71E945}
 	EndGlobalSection
 EndGlobal
