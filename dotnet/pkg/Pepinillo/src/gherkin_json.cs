@@ -6,12 +6,12 @@ using System.Text.Json;
 public class PepinilloConfig
 {
     public string baseTest { get; set; } = "";
-    public string context { get;set;} = "";
+    public string scenarioState { get; set; } = "";
 
     // AOT dependency injection; we need to know what names can be injected and how to instantiate them
 
 
-    
+
     public Dictionary<string, FeatureSpace> space { set; get; } = new();
 }
 public class FeatureSpace

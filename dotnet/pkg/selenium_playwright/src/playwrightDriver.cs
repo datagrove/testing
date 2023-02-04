@@ -18,25 +18,26 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
 //IFindsElement,ISupportsPrint, IAllowsFileDetection, IHasCapabilities, IHasCommandExecutor, IHasSessionId, ICustomDriverCommandExecutor, IHasVirtualAuthenticator
 
 {
-    public BrowserProxy proxy;
+    public PlaywrightProxy proxy;
     public bool isRoot = false;
 
 
     // pages come from the context, otherwise they aren't traced
     // how does tracing multiple pages work?
-    public IPage page;
+    public IPage page => proxy.state.page;
 
-    private IFrame? frame { 
-        get; 
+    private IFrame? frame
+    {
+        get;
         set;
     } // null is more convenient than MainFrame because we have to refresh MainFrame on every goto
     public object? rvalue = null;
     public IElementHandle? current = null;
 
-    public PlaywrightDriver(PlaywrightOptions? options = null)
+    public PlaywrightDriver(PlaywrightState state)
     {
         isRoot = true;
-        this.proxy = new BrowserProxy(this, options);
+        this.proxy = new PlaywrightProxy(this, state);
     }
 
     public ITargetLocator SwitchTo()
@@ -62,16 +63,18 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
 
     public T exec<T>(Func<PlaywrightDriver, Task<object>> fn)
     {
-       for (int i=0; i<10; i++){
+        for (int i = 0; i < 10; i++)
+        {
             try
             {
                 return proxy.exec<T>(this, fn);
             }
             catch (Microsoft.Playwright.PlaywrightException e)
             {
-                if (e.Message.Contains("context was destroyed") || e.Message.Contains("attached") || e.Message.Contains("navigating")|| e.Message.Contains("detached")){
+                if (e.Message.Contains("context was destroyed") || e.Message.Contains("attached") || e.Message.Contains("navigating") || e.Message.Contains("detached"))
+                {
                     Thread.Sleep(100);
-                    
+
                 }
                 else
                 {
@@ -142,7 +145,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
                 try
                 {
                     System.Threading.Thread.Sleep(100);
-                    await p.page.GotoAsync(url,opt);
+                    await p.page.GotoAsync(url, opt);
                     await p.page.ContentAsync();
                     System.Threading.Thread.Sleep(100);
                     return true;
@@ -266,7 +269,8 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     public IWebElement FindElement(By by)
     {
         var hs = FindElements(by);
-        if (hs.Count==0){
+        if (hs.Count == 0)
+        {
             throw new NoSuchElementException("wd");
         }
         return hs[0];
@@ -274,8 +278,9 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     // if this doesn't find, it throws.
     public IWebElement FindElement(By by, IElementHandle root)
     {
-        var hs = FindElements(by,root);
-        if (hs.Count==0){
+        var hs = FindElements(by, root);
+        if (hs.Count == 0)
+        {
             throw new NoSuchElementException("wd");
         }
         return hs[0];
@@ -286,13 +291,17 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         var r = exec<ReadOnlyCollection<IWebElement>>(async Task<object> (PlaywrightDriver p) =>
         {
             IReadOnlyList<IElementHandle> h;
-            if (f!=null) {
-                h =  await  f.Page.Locator(by.description).ElementHandlesAsync();
-                if (h.Count==0) {
-                    h =  await  f.Locator(by.description).ElementHandlesAsync();
+            if (f != null)
+            {
+                h = await f.Page.Locator(by.description).ElementHandlesAsync();
+                if (h.Count == 0)
+                {
+                    h = await f.Locator(by.description).ElementHandlesAsync();
                 }
-            } else {
-                h =  await page.Locator(by.description).ElementHandlesAsync();
+            }
+            else
+            {
+                h = await page.Locator(by.description).ElementHandlesAsync();
             }
             var lst = h.Select(e => (IWebElement)new PWebElement(this, e)).ToList();
             return new ReadOnlyCollection<IWebElement>(lst);
@@ -405,11 +414,14 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         var f = frame;
         frame = exec<IFrame?>(async Task<object> (PlaywrightDriver p) =>
         {
-            if (f==null) {
+            if (f == null)
+            {
                 var h = await page.Locator(By.Name(frameName).description).ElementHandleAsync();
                 if (h != null) return await h.ContentFrameAsync();
                 else return null;
-            } else {
+            }
+            else
+            {
                 var h = await f.Page.Locator(By.Name(frameName).description).ElementHandleAsync();
                 if (h != null) return await h.ContentFrameAsync();
                 else return null;

@@ -3,38 +3,66 @@
 namespace pepin;
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using pepin_simple;
 
-// /Users/jim/dev/datagrove/testing/dotnet/template/pepin_simple/feature/Calc.feature
+// /Users/jimhurd/dev/datagrove/testing/dotnet/template/pepin_simple/feature/Calc.feature
 [TestClass()]
 [TestCategory("pepin")]
-public class Calculator 
+public class Calculator
 {
     public TestContext? TestContext { get; set; }
-    
-    public class Steps {
 
-        public Steps(StepState actor)
+    public class Steps
+    {
+        internal pepin_simple.CalculatorSteps calculatorSteps;
+
+        public Steps(ScenarioState context)
         {
+            calculatorSteps = new pepin_simple.CalculatorSteps();
 
-            var step=this;
+        }
 
+        public async Task initialize()
+        {
+            var step = this;
+            step.calculatorSteps.I_have_a_calculator();
+
+
+            await Task.CompletedTask;
         }
     }
 
     [TestMethod()]
     public async Task Add_two_numbers()
     {
-    await using (var actor = new {StepState}(TestContext!)){
-        var step = new Steps(actor);
+        await using (var context = await ScenarioState.begin(TestContext!))
+        {
+
+            var step = new Steps(context);
+            await step.initialize();
+            await step.calculatorSteps.I_have_and_as_input(1, 2);
+
+            await step.calculatorSteps.I_add_more_numbers(GherkinTable.make(new string[] { "number" }, new string[] { "1", "2" }));
+
+            step.calculatorSteps.I_should_get_an_output_of(6);
+
         }
     }
     [TestMethod()]
     public async Task Add_two_numbers__1()
     {
-    await using (var actor = new {StepState}(TestContext!)){
-        var step = new Steps(actor);
+        await using (var context = new ScenarioState(TestContext!))
+        {
+            var step = new Steps(context);
+            await step.initialize();
+            await step.calculatorSteps.I_have_and_as_input(2, 3);
+
+            await step.calculatorSteps.I_add_more_numbers(GherkinTable.make(new string[] { "number" }, new string[] { "1", "2" }));
+
+            step.calculatorSteps.I_should_get_an_output_of(8);
+
         }
     }
 
-    
+
 }

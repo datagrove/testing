@@ -19,7 +19,8 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 public class Pepin
 {
 
-    static public string findFirstFile(string dir, string pattern){
+    static public string findFirstFile(string dir, string pattern)
+    {
         var matcher = new Matcher();
         matcher.AddInclude(pattern);
         var di = new DirectoryInfo(dir);
@@ -68,22 +69,25 @@ public class Pepin
         var stem = Path.GetFileNameWithoutExtension(path);
         var outdir = $"{path}/../{stem}_aot";
         Directory.CreateDirectory(outdir);
-  
+
 
         // var o = JsonSerializer.Serialize(s, new JsonSerializerOptions { WriteIndented = true });
         if (s == null)
         {
             // no config, use defaults
-            new BuildGherkin(a).config(path,outdir).build();
+            new BuildGherkin(a).config(path, outdir).build();
         }
         else
         {
-            if ( s.space == null || s.space.Count() == 0){
+            if (s.space == null || s.space.Count() == 0)
+            {
                 new BuildGherkin(a).config(path, outdir, s).build();
-            } else {
+            }
+            else
+            {
                 foreach (var e in s.space)
                 {
-                    new BuildGherkin(a).config(path,outdir, s, e.Key, e.Value).build();
+                    new BuildGherkin(a).config(path, outdir, s, e.Key, e.Value).build();
                 }
             }
         }
@@ -154,11 +158,16 @@ public class Namer
         return sname;
     }
 }
+
+// first create all the dependencies asynchronously
+// next initalize the steps
+// do the background steps
+// finally do the scenario steps
 public class GherkinCompiler
 {
     public static void compile(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
     {
-        var StepState = "StepState";
+        var StepState = bg.scenarioState;
         var parser = new Parser();
         try
         {
@@ -201,7 +210,7 @@ public class GherkinCompiler
                 {
                     stepClass.Add(cstep.step.classType.FullName ?? cstep.step.classType.Name);
                     // backgrounds don't initialize, they only use the members.
-                    tw.WriteLine("step." + cstep.csharp);
+                    tw.WriteLine(cstep.csharp);
                     //methods.WriteLine($"shot(\"{Uri.EscapeDataString(text.Replace(' ', '_'))}\");");
                 }
             };
@@ -262,9 +271,11 @@ public class GherkinCompiler
                         methods.WriteLine($"[TestMethod()]");
                         methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
-                        methods.WriteLine("await using (var actor = new {StepState}(TestContext!)){");
+                        methods.WriteLine($"await using (var context =  await {StepState}.begin(TestContext!)){{");
+
                         methods.Indent++;
-                        methods.WriteLine("var step = new Steps(actor);");
+                        methods.WriteLine("var step = new Steps(context);");
+                        methods.WriteLine($"await step.initialize();");
                         foreach (var st in scenario.Steps)
                         {
                             var tx = st.Text;
@@ -322,13 +333,17 @@ public class GherkinCompiler
                 var nm3 = ss.usingNamespace[cn];
                 var nmx = nm3.Substring(0, 1).ToLower() + nm3.Substring(1);
                 member += $"        internal {cn} {nmx};\n";
-                if ("inventoryReceiptsStepDef" != nmx)
+                if (true)
                 {
-                    featureConstructor += $"            {nmx} = new {cn}(actor.driver,actor.context);\n";
+                    featureConstructor += $"            {nmx} = new {cn}();\n";
+                }
+                else if ("inventoryReceiptsStepDef" != nmx)
+                {
+                    featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context);\n";
                 }
                 else
                 {
-                    featureConstructor += $"            {nmx} = new {cn}(actor.driver,actor.context,actor.scenario);\n";
+                    featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context,context.scenario);\n";
                 }
             }
 
@@ -337,11 +352,16 @@ public class GherkinCompiler
             var stepDef = @$"
     public class Steps {{
 {member}
-        public Steps({StepState} actor)
+        public Steps({StepState} context)
         {{
 {featureConstructor}
+        }}
+
+        public async Task initialize()
+        {{
             var step=this;
-{bgb.ToString()}
+            {bgb.ToString()}
+            await Task.CompletedTask;
         }}
     }}
 ";
@@ -442,28 +462,28 @@ public class BuildGherkin
 
     public string tag = "pepin";
     public string root { get; set; } = ".";
-    public string outdir {get;set;} = ".";
+    public string outdir { get; set; } = ".";
 
     PepinilloConfig? cfg;
 
-    string container { get;set;} = "";
+    public string scenarioState { get; set; } = "";
 
-    public BuildGherkin config(string root,string outdir, PepinilloConfig? cfg=null)
+    public BuildGherkin config(string root, string outdir, PepinilloConfig? cfg = null)
     {
         this.root = root;
         this.cfg = cfg;
         this.baseTest = cfg?.baseTest ?? "";
-        this.container = cfg?.context ?? "Context";
-        if (baseTest!="")
+        this.scenarioState = cfg?.scenarioState ?? "ScenarioState";
+        if (baseTest != "")
         {
             baseTest = ": " + baseTest;
         }
         this.outputFile = outdir + "/pepinillo.cs";
         return this;
     }
-    public BuildGherkin config(string root,string outdir, PepinilloConfig cfg,  string name, FeatureSpace config)
+    public BuildGherkin config(string root, string outdir, PepinilloConfig cfg, string name, FeatureSpace config)
     {
-        this.config(root,outdir, cfg);
+        this.config(root, outdir, cfg);
         this.root = root;
         outputFile = config.outputFile ?? this.outputFile;
         tag = name;
@@ -477,7 +497,7 @@ public class BuildGherkin
     {
         if (featureFolder.Count() == 0)
         {
-            featureFolder = new string[] { root};
+            featureFolder = new string[] { root };
         }
         var sb = new StringBuilder();
         var log = new StringBuilder();
@@ -499,12 +519,13 @@ public class BuildGherkin
 
         // not needed because we use fully qualified
         // + c.ss.usingText() 
-
+        var stem = Path.GetFileNameWithoutExtension(root);
         File.WriteAllText(outputFile, $@"// File generated by Pepinillo, If you edit this file, rename it and/or delete the .feature file that generates it.
 
 namespace {tag};
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using {stem};
 " + sb.ToString());
 
         // here we add a bunch of debug information the markdown loag.

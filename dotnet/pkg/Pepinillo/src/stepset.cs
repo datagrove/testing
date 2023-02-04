@@ -224,7 +224,10 @@ public class StepSet
         }
 
         var n = step.className.Substring(0, 1).ToLower() + step.className.Substring(1);
-        stmt += "await " + n + "." + step.m.Name + "(" + String.Join(",", args) + ");\n";
+
+        if (step.IsAsync)
+            stmt += "await ";
+        stmt += "step." + n + "." + step.m.Name + "(" + String.Join(",", args) + ");\n";
 
         return stmt;
     }
@@ -249,7 +252,11 @@ public class StepSet
             }
         }
 
-        if (step.Count() > 1)
+        if (step.Count() == 1)
+        {
+            return step.First();
+        }
+        else if (step.Count() > 1)
         {
             var b = new StringBuilder();
             b.Append($"\n*{text}*\n");
@@ -259,7 +266,9 @@ public class StepSet
             }
             warning(b.ToString());
             return step.First();
-        } else {
+        }
+        else
+        {
             return null;
 
             /* TODO!!
@@ -271,7 +280,7 @@ public class StepSet
             allSteps.Add(st);
             return ct; */
         }
-        
+
     }
 
 }
@@ -285,6 +294,7 @@ public class GherkinStep
     public string className;
     public Regex rg = new Regex(@"");
 
+    public bool IsAsync => m.ReturnType == typeof(Task);
     public string text;
     public int priority;
     public GherkinStep(Type classType, StepSet stepSet, MethodInfo m, string className, string s, int priority)
