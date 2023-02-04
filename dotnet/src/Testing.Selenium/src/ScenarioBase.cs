@@ -3,15 +3,15 @@ namespace Datagrove.Testing.Selenium;
 using System.Collections.Generic;
 using Microsoft.Playwright;
 
-// the purpose of this is so that steps have an easy global state they can share
+// the purpose of this is so that steps have an easy global state steps can share
 // this is at odds with have a test that uses multiple contexts, but how could you do this in gherkin anyway? 
 
 // This is a statically typed dependency injection container, if you care about that sort of thing
 
-public class PlaywrightScenarioState : IAsyncDisposable
+public class PlaywrightScenarioBase : IAsyncDisposable
 {
 
-    public PlaywrightOptions options;
+    public PlaywrightOptions? options;
 
     public IPlaywright? playwright;
 
@@ -23,10 +23,6 @@ public class PlaywrightScenarioState : IAsyncDisposable
 
     public IPage? _page;
 
-    public PlaywrightScenarioState( PlaywrightOptions options)
-    {
-        this.options = options;
-    }
 
     public async ValueTask<IPlaywright> pw() {
         if (playwright==null) playwright =  await Playwright.CreateAsync();

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Datagrove.Testing.Selenium;
 using Microsoft.Playwright;
 using System.Text.RegularExpressions;
-using Datagrove.Testing.MsTest;
+using Datagrove.Testing.MSTest;
 
 // steps are global; we could easily have one step class but instead we break them apart here to make it easier to see what's going on
 
@@ -17,36 +17,12 @@ public class ScenarioState : ScenarioBase {
 
     // there's nothing special about the members provided here
     // returns a playwright page without selenium compatibility
-  
-    PlaywrightState? api_;
-    public async ValueTask<Datagrove.Testing.Selenium.PlaywrightState> state()
-    {
-        if (state_ == null)
-        {
-            state_ = await Datagrove.Testing.Selenium.PlaywrightState.createAsync(new PlaywrightOptions());
-        }
-        return state_;
-    }
+    public ScenarioState(TestContext context) : base(context) { }
 
-    public async Task<IPage> page() => (await state()).page;
-
-    static public async ValueTask create(TextContext context) {
-        var r = new ScenarioState();
-        await r.create(context);
-    }
-
-    static public async Task<ScenarioState> begin(TestContext context)
-    {
+    static public async Task<ScenarioState> create(TestContext context) {
+        var state = new ScenarioState(context);
         await Task.CompletedTask;
-        return new ScenarioState(context);
-    }
-
-
-    // note that the name doen't matter, all steps are effectively global for a compilation. If you are constrained to be backwards compatible with specflow, you can take the name of the
-
-    public ValueTask DisposeAsync()
-    {
-        throw new NotImplementedException();
+        return state;
     }
 }
 [Binding]
