@@ -1,6 +1,5 @@
 ﻿using System.CommandLine;
-
-namespace Datagrove.Testing.Pepinillo;
+using Datagrove.Testing.Pepinillo;
 
 class Program
 {
@@ -33,6 +32,6 @@ class Program
 
     internal static async Task Build(bool verbose)
     {
-        await Datagrove.Pep.Pepin.build(Directory.GetCurrentDirectory());
+        await Pepin.build(Directory.GetCurrentDirectory());
     }
 }

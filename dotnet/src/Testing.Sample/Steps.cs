@@ -1,4 +1,4 @@
-namespace pepin_simple;
+namespace Datagrove.Testing.Sample;
 using System;
 using TechTalk.SpecFlow;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,25 +8,20 @@ using Microsoft.Playwright;
 using System.Text.RegularExpressions;
 using Datagrove.Testing.MSTest;
 
+using static Microsoft.Playwright.Assertions;
 // steps are global; we could easily have one step class but instead we break them apart here to make it easier to see what's going on
 
 // Holds the state for a single example of a single scenario. Steps may reference context itself or any member. Each test will initialize a TestState when it starts, and provide it to each of the steps used by the test. Be sure code is thread safe so that you can run all your tests in parallel (not hard because each thread will have its own instance).
 
 // the Datagrove.Testing.Selenium.ScenarioState gives you most of the things you want: browser, api, selenium webdriver, direct playwright access. but add service here that you want your steps to have access to.
-public class ScenarioState : ScenarioBase {
-
-    // there's nothing special about the members provided here
-    // returns a playwright page without selenium compatibility
+public class ScenarioState : ScenarioBase, IAsyncDisposable {
+    // you can provide your own services here to the step classes
     public ScenarioState(TestContext context) : base(context) { }
-
-    static public async Task<ScenarioState> create(TestContext context) {
-        var state = new ScenarioState(context);
-        await Task.CompletedTask;
-        return state;
-    }
 }
+
+//  this shows steps that don't use any services
 [Binding]
-class CalculatorSteps : IAsyncDisposable
+public class CalculatorSteps : IAsyncDisposable
 {
     //StepState state;
     // note that a step class is initialized once per test. It is not shared.
@@ -74,44 +69,44 @@ class CalculatorSteps : IAsyncDisposable
     }
 
 }
+
+// this shows rest api steps using Playwright rest api directly
 [Binding]
 public class RestSteps
 {
-    static string API_TOKEN = Environment.GetEnvironmentVariable("GITHUB_API_TOKEN") ?? "";
-    private IAPIRequestContext Request = null;
-
-    public string getDoc() => @"https://dog.ceo/api/breeds/image/random";
-    public string getImage() => @"https://images.dog.ceo/breeds/schipperke/n02104365_9489.jpg";
-
-    public async Task SetUpAPITesting()
+    IAPIRequestContext api;
+    RestSteps(IAPIRequestContext api)
     {
-        await CreateAPIRequestContext();
+        this.api = api;
     }
-
-    private async Task CreateAPIRequestContext()
+    private async Task CreateAPIRequestContext(ScenarioState state)
     {
-        Request = await this.Playwright.APIRequest.NewContextAsync(new()
-        {
-            BaseURL = "https://api.github.com",
-        });
+        var url1 =  @"https://dog.ceo/api/breeds/image/random";
+        var url2 = @"https://images.dog.ceo/breeds/schipperke/n02104365_9489.jpg";
+        await api.GetAsync(url1);
+        await api.GetAsync(url2);
+
     }
-
-
 }
+
+// this shows steps using boa > webdriver > playwright
 [Binding]
 public class BoaSteps
 {
 
 }
+
+
+// this shows steps using playwright directly.
 [Binding]
-public class PlaywrightSteps : PageTest // worth overhead to get expect?
+public class PlaywrightSteps 
 {
     IPage page;
     PlaywrightSteps(IPage page)
     {
-        Page.GotoAsync("https://playwright.dev/");
         this.page = page;
     }
+
 
     [When(@"on (.*) page")]
     public async Task OnHomePage(string url)
@@ -122,9 +117,7 @@ public class PlaywrightSteps : PageTest // worth overhead to get expect?
     [Then(@"the page should have a title of (.*)")]
     public async Task ThePageShouldHaveATitleOf(string title)
     {
-
-        // Expect a title "to contain" a substring.
-        await Expect(page).ToHaveTitleAsync(new Regex(title));
+        await Assertions.Expect(page).ToHaveTitleAsync(new Regex(title));
     }
 
     [Then(@"the url should be (.*)")]
@@ -147,7 +140,7 @@ public class PlaywrightSteps : PageTest // worth overhead to get expect?
         await getStarted.ClickAsync();
 
         // Expects the URL to contain intro.
-        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
+        await Expect(page).ToHaveURLAsync(new Regex(".*intro"));
     }
 }
 
