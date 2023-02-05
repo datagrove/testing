@@ -1,5 +1,4 @@
-namespace Datagrove.Testing;
-using Datagrove.Testing.Selenium;
+namespace Datagrove.Testing.Selenium;
 using System;
 using System.Collections.Generic;
 using System.Drawing;

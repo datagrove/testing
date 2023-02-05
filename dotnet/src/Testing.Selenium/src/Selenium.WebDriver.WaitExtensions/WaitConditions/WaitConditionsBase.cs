@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using Datagrove.Testing.Selenium;
 
-namespace Playwright.WebDriver.WaitExtension.WaitConditions
+namespace Datagrove.Testing.Selenium
 {
     public abstract class WaitConditionsBase
     {

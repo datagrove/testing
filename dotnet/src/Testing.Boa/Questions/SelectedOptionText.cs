@@ -1,6 +1,5 @@
 ﻿using Boa.Constrictor.Screenplay;
 using Datagrove.Testing.Selenium;
-using Datagrove.Testing.Selenium.Support.UI;
 
 namespace Datagrove.Testing.Boa
 {

@@ -16,7 +16,7 @@ So to search for a substring you can use the string without the double quotes:
 myElement = self.page.locator('text=Some Text 123')
 */
 
-namespace Datagrove.Testing.Selenium.Support.UI
+namespace Datagrove.Testing.Selenium
 {
     /// <summary>
     /// Provides a convenience method for manipulating selections of options in an HTML select element.

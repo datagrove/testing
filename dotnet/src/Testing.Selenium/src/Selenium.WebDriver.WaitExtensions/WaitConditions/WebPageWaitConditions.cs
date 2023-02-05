@@ -1,8 +1,6 @@
 using System;
-using Datagrove.Testing.Selenium;
-using Datagrove.Testing.Selenium.Support.UI;
 
-namespace Playwright.WebDriver.WaitExtension.WaitConditions
+namespace Datagrove.Testing.Selenium
 {
     public class WebPageWaitConditions : IWebPageWaitConditions
     {

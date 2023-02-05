@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Datagrove.Testing.Selenium;
 using Playwright.WebDriver.WaitExtension.WaitTypeSelections;
 
-namespace Playwright.WebDriver.WaitExtension.WaitConditions
+namespace Datagrove.Testing.Selenium
 {
     public class ClassWaitConditions : WaitConditionsBase, IClassWaitConditions
     {

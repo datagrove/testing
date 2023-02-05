@@ -22,7 +22,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Datagrove.Testing.Selenium;
 
-namespace Datagrove.Testing.Selenium.WaitHelpers
+namespace Datagrove.Testing.Selenium
 {
     /// <summary>
     /// Supplies a set of common conditions that can be waited for using <see cref="WebDriverWait"/>.

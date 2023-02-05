@@ -4,6 +4,8 @@ namespace Datagrove.Testing.Selenium;
 using System.Collections.Generic;
 using Microsoft.Playwright;
 
+public class DriverOptions{
+}
 public class SeleniumOptions
 {
 }

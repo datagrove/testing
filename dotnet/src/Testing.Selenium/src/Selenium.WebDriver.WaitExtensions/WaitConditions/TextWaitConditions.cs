@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Datagrove.Testing.Selenium;
 
-namespace Playwright.WebDriver.WaitExtension.WaitConditions
+namespace Datagrove.Testing.Selenium
 {
     public class TextWaitConditions : WaitConditionsBase, ITextWaitConditions
     {

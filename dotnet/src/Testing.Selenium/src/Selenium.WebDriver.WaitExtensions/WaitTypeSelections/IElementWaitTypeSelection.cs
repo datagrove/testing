@@ -1,4 +1,4 @@
-using Playwright.WebDriver.WaitExtension.WaitConditions;
+using Datagrove.Testing.Selenium;
 
 namespace Playwright.WebDriver.WaitExtension.WaitTypeSelections
 {
