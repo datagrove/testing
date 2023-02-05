@@ -34,14 +34,16 @@ public class PlaywrightOptions
     }
 
     public Browser browserType;
-    public BrowserTypeLaunchOptions options;
+    public BrowserTypeLaunchOptions browserOptions;
     public BrowserNewContextOptions contextOptions;
-
+    public APIRequestNewContextOptions apiNew = new();
+    public APIRequestContextOptions api = new();
+    public APIRequestContextStorageStateOptions apiStorage = new();
 
     public string trace { get; set; } = "";
     public PlaywrightOptions()
     {
-        this.options = new BrowserTypeLaunchOptions();
+        this.browserOptions = new BrowserTypeLaunchOptions();
         this.contextOptions = contextOptions ?? new BrowserNewContextOptions
         {
             ViewportSize = new ViewportSize
@@ -62,17 +64,17 @@ public class PlaywrightOptions
         switch (opt.browserType)
         {
             case PlaywrightOptions.Browser.Chrome:
-                browser = await playwright.Chromium.LaunchAsync(opt.options);
+                browser = await playwright.Chromium.LaunchAsync(opt.browserOptions);
                 break;
             case PlaywrightOptions.Browser.Edge:
                 // channel msedge
-                browser = await playwright.Chromium.LaunchAsync(opt.options);
+                browser = await playwright.Chromium.LaunchAsync(opt.browserOptions);
                 break;
             case PlaywrightOptions.Browser.Safari:
-                browser = await playwright.Webkit.LaunchAsync(opt.options);
+                browser = await playwright.Webkit.LaunchAsync(opt.browserOptions);
                 break;
             case PlaywrightOptions.Browser.Firefox:
-                browser = await playwright.Firefox.LaunchAsync(opt.options);
+                browser = await playwright.Firefox.LaunchAsync(opt.browserOptions);
                 break;
         }
 

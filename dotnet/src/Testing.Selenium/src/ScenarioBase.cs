@@ -11,7 +11,21 @@ using Microsoft.Playwright;
 public class PlaywrightScenarioBase : IAsyncDisposable
 {
 
-    public PlaywrightOptions? options;
+    private PlaywrightOptions? _options;
+    private async ValueTask<PlaywrightOptions> opt()
+    {
+        if (_options == null)
+        {
+            _options = await options();
+        }
+        return _options;
+    }
+
+    public virtual async ValueTask<PlaywrightOptions> options()
+    {
+        await Task.CompletedTask;
+        return new PlaywrightOptions();
+    }
 
     public IPlaywright? playwright;
 
@@ -24,31 +38,45 @@ public class PlaywrightScenarioBase : IAsyncDisposable
     public IPage? _page;
 
 
-    public async ValueTask<IPlaywright> pw() {
-        if (playwright==null) playwright =  await Playwright.CreateAsync();
+    public async ValueTask<IPlaywright> pw()
+    {
+
+        if (playwright == null) playwright = await Playwright.CreateAsync();
         return playwright;
     }
-    public async ValueTask<IPage> page() {
-        if (_page==null) {
-            browser = await (await pw()).Chromium.LaunchAsync(options.options);
-            browserContext = await browser.NewContextAsync(options.contextOptions);
+    public async ValueTask<IPage> page()
+    {
+        if (_page == null)
+        {
+            var o = await opt();
+            browser = await (await pw()).Chromium.LaunchAsync(o.browserOptions);
+            browserContext = await browser.NewContextAsync(o.contextOptions);
             _page = await browserContext.NewPageAsync();
         }
         return _page;
     }
 
-    public async ValueTask<PlaywrightDriver> driver() {
+    public async ValueTask<PlaywrightDriver> driver()
+    {
         var p = await page();
-        return _driver =  new PlaywrightDriver(browserContext!,p);
+        return _driver = new PlaywrightDriver(browserContext!, p);
     }
 
-    public async ValueTask<IAPIRequestContext> api() => _api = await (await pw()).APIRequest.NewContextAsync();
-    
+    public async ValueTask<IAPIRequestContext> api()
+    {
+        if (_api == null)
+        {
+            var o = await opt();
+            _api = await (await pw()).APIRequest.NewContextAsync(o.apiNew);
+        }
+        return _api;
+    }
+
     public async ValueTask DisposeAsync()
     {
-        if (_api!=null) await _api.DisposeAsync();
-        if (browserContext!=null) await browserContext.DisposeAsync();
-        if (browser!=null) await browser.DisposeAsync();
+        if (_api != null) await _api.DisposeAsync();
+        if (browserContext != null) await browserContext.DisposeAsync();
+        if (browser != null) await browser.DisposeAsync();
         _driver?.Dispose();
         playwright?.Dispose();
     }

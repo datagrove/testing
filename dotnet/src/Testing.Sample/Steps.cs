@@ -14,7 +14,24 @@ using static Microsoft.Playwright.Assertions;
 // Holds the state for a single example of a single scenario. Steps may reference context itself or any member. Each test will initialize a TestState when it starts, and provide it to each of the steps used by the test. Be sure code is thread safe so that you can run all your tests in parallel (not hard because each thread will have its own instance).
 
 // the Datagrove.Testing.Selenium.ScenarioState gives you most of the things you want: browser, api, selenium webdriver, direct playwright access. but add service here that you want your steps to have access to.
-public class ScenarioState : ScenarioBase, IAsyncDisposable {
+public class ScenarioState : ScenarioBase, IAsyncDisposable
+{
+
+    // typically all testing parameters that are not embedded in the script are read from an appsettings.json file, you can read those and provide them here.
+    public override async ValueTask<PlaywrightOptions> options()
+    {
+        await Task.CompletedTask;
+
+        return new PlaywrightOptions()
+        {
+            apiNew = new()
+            {
+                // All requests we send go to this API endpoint.
+                // BaseURL = "https://api.github.com",
+                // ExtraHTTPHeaders = headers,
+            }
+        };
+    }
     // you can provide your own services here to the step classes
     public ScenarioState(TestContext context) : base(context) { }
 }
@@ -81,11 +98,12 @@ public class RestSteps
     }
     private async Task CreateAPIRequestContext(ScenarioState state)
     {
-        var url1 =  @"https://dog.ceo/api/breeds/image/random";
+        var url1 = @"https://dog.ceo/api/breeds/image/random";
         var url2 = @"https://images.dog.ceo/breeds/schipperke/n02104365_9489.jpg";
-        await api.GetAsync(url1);
+        var o = await api.GetAsync(url1);
+        var j = await o.JsonAsync();
         await api.GetAsync(url2);
-
+        Assert.AreEqual("Bug description", j?.GetProperty("body").GetString());
     }
 }
 
@@ -99,7 +117,7 @@ public class BoaSteps
 
 // this shows steps using playwright directly.
 [Binding]
-public class PlaywrightSteps 
+public class PlaywrightSteps
 {
     IPage page;
     PlaywrightSteps(IPage page)
