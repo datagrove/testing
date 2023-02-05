@@ -12,7 +12,7 @@ public class PepinilloConfig
 
 
 
-    public Dictionary<string, FeatureSpace> space { set; get; } = new();
+    public Dictionary<string, FeatureSpace> project { set; get; } = new();
 }
 public class FeatureSpace
 {

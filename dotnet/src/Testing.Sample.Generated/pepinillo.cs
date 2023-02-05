@@ -3,7 +3,7 @@
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature
+// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature
 [TestClass()]
 
 public class Calculator 
@@ -61,7 +61,7 @@ public class Calculator
     
 }
 
-// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature
+// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature
 [TestClass()]
 
 public class Calculator1 
@@ -99,7 +99,7 @@ public class Calculator1
     
 }
 
-// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature
+// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature
 [TestClass()]
 
 public class Rest 
