@@ -4,13 +4,16 @@ using System.Reflection;
 using System.Text;
 using Gherkin.Ast;
 using TechTalk.SpecFlow;
+using System.CodeDom.Compiler;
 
-// using reflection we don't get the file name, change to code generation?
+
+
 public class StepSet
 {
     public List<GherkinStep> allSteps = new();
-    public List<GherkinStep> stubSteps = new();
+
     List<TransformArg> transforms = new();
+
 
     // the json will create something the publisher can use to describe the classes.
     public string text()
@@ -270,7 +273,14 @@ public class StepSet
         else
         {
             return null;
+            // var code = codeFromString(
+            // var verb = "Given";
+            // var paramlist = "";
+            // var fname = codeFromString()
 
+            // StringBuilder sx = new();
+            // s.Append($"[{verb}({match}]\n");
+            // s.Append($"void {fname}({paramlist})\n{{")
             /* TODO!!
             // add s step that matches and return it 
             var st = new GherkinStep();

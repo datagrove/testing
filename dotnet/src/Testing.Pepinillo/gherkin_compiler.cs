@@ -158,14 +158,89 @@ public class Namer
         return sname;
     }
 }
+public class MissingStep
+{
+    public Step step;
+    public string name;
 
+    public MissingStep(Step step)
+    {
+        this.step = step;
+        this.name = new string(step.Text.Trim().Select(e => char.IsAsciiLetterOrDigit(e) ? e : '_').ToArray());
+    }
+    public string stepCall() => $"new MissingStep().{name}();";
+    //     private static string ToLiteral(string input)
+    // {
+    //     using (var writer = new StringWriter())
+    //     {
+    //         using (var provider = CodeDomProvider.CreateProvider("CSharp"))
+    //         {
+    //             provider.GenerateCodeFromExpression(new CodePrimitiveExpression(input), writer, null);
+    //             return writer.ToString();
+    //         }
+    //     }
+    // }
+    public void writeTo(IndentedTextWriter s)
+    {
+        var tx = step.Text.Trim();
+        var fmtx = tx.Replace("\"", "\\\"");
+
+        var param = "";
+        var key = step.Keyword.Trim();
+        if (key == "And") key = "When";
+        s.WriteLine("");
+        s.WriteLine($"[{key}(\"{fmtx}\")]");
+        s.WriteLine($"public void {name}({param}) {{");
+        s.Indent++;
+        s.WriteLine("throw new NotImplementedException();");
+        s.Indent--;
+        s.WriteLine("}");
+    }
+}
 // first create all the dependencies asynchronously
 // next initalize the steps
 // do the background steps
 // finally do the scenario steps
 public class GherkinCompiler
 {
-    public static void compile(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
+    // perhaps we can make an initial pass that generates missing methods?
+    // why not one pass though?
+
+    public void writeMissing(string path)
+    {
+        var baseTextWriter = new System.IO.StringWriter();
+        var methods = new IndentedTextWriter(baseTextWriter, "    ");
+        methods.WriteLine(@"//Do not edit this generated file!. You can modify these step definitions to fill in the missing steps and copy them into your step project");
+        methods.WriteLine("using TechTalk.SpecFlow;");
+        methods.WriteLine("public class MissingStep {");
+        methods.Indent++;
+        foreach (var e in stubSteps)
+        {
+            e.Value.writeTo(methods);
+        }
+        methods.Indent--;
+        methods.WriteLine("}");
+        File.WriteAllText(path, baseTextWriter.ToString());
+    }
+
+
+    public Dictionary<string, MissingStep> stubSteps = new();
+    static void compile0(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
+    {
+        var StepState = bg.scenarioState;
+        var parser = new Parser();
+        try
+        {
+            var doc = parser.Parse(file);
+            var x = new StringBuilder();
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
+    public void compile(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
     {
         var StepState = bg.scenarioState;
         var parser = new Parser();
@@ -196,18 +271,19 @@ public class GherkinCompiler
             var appendStep = (Step step, string text, IndentedTextWriter tw) =>
             {
                 var cstep = ss.compile(step, text, (string w) => compiled(file, "", w));
-                if (cstep != null)
-                    docm.addStep(cstep);
                 if (cstep == null)
                 {
                     var error = $"\n## Not found\n{text}\n";
                     compiled(file, "", error);
-
+                    var st = new MissingStep(step);
+                    stubSteps.Add(step.Text, st);
+                    tw.WriteLine(st.stepCall());
                     // for debugging
                     var cstep2 = ss.compile(step, text, (string w) => compiled(file, "", w));
                 }
                 else
                 {
+                    docm.addStep(cstep);
                     stepClass.Add(cstep.step.classType.FullName ?? cstep.step.classType.Name);
                     // backgrounds don't initialize, they only use the members.
                     tw.WriteLine(cstep.csharp);
@@ -268,14 +344,14 @@ public class GherkinCompiler
                     var oneExample = (Dictionary<string, string> ed) =>
                     {
                         var suffix = exn == 0 ? "" : $"__{exn}";
-                        methods.WriteLine($"[TestMethod()]");
+                        methods.WriteLine(bg.TestMethod());
                         methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
                         methods.WriteLine($"await using (var context = new {StepState}(TestContext!)){{");
 
                         methods.Indent++;
                         methods.WriteLine("var step = new Steps(context);");
-                        methods.WriteLine($"await step.initialize();");
+                        methods.WriteLine($"await step.background();");
                         foreach (var st in scenario.Steps)
                         {
                             var tx = st.Text;
@@ -357,7 +433,7 @@ public class GherkinCompiler
 {featureConstructor}
         }}
 
-        public async Task initialize()
+        public async Task background()
         {{
             var step=this;
             {bgb.ToString()}
@@ -367,7 +443,7 @@ public class GherkinCompiler
 ";
 
             var debugInfo = "";
-            var category = bg.tag==""?"":$"[TestCategory(\"{bg.tag}\")]";
+            var category = bg.tag == "" ? "" : $"[TestCategory(\"{bg.tag}\")]";
             var result = $@"
 // {file}
 [TestClass()]
@@ -445,9 +521,26 @@ public class GherkinCompiler
 
 }
 
+enum TestSdk
+{
+    mstest,
+    nunit,
+    xunit
+}
 // Gherkin doesn't natively understand namespaces, so we need to add some additional information about what types are useful for a given feature folder.
 public class BuildGherkin
 {
+    TestSdk sdk = TestSdk.mstest;
+
+    public string TestMethod()
+    {
+        switch (sdk)
+        {
+
+            default:
+                return "[TestMethod()]";
+        }
+    }
     public Assembly[] assembly;
     public string[] stepSpace = new string[] { };
     public string[] featureFolder = new string[] { };
@@ -463,7 +556,6 @@ public class BuildGherkin
     public string tag = "";
     public string root { get; set; } = ".";
     public string outdir { get; set; } = ".";
-    public string stepNamespace;
 
     PepinilloConfig? cfg;
 
@@ -518,17 +610,13 @@ public class BuildGherkin
         Console.Write($"{fl.Count()} feature files.");
         var doc = c.compile(compiled, fl, this);
 
-        // !!TODO: we should be able to get the namespace from the assembly
-        stepNamespace = "Datagrove.Testing.Sample";
         // not needed because we use fully qualified
         // + c.ss.usingText() 
         var stem = Path.GetFileName(root);
         File.WriteAllText(outputFile, $@"// File generated by Pepinillo, If you edit this file, rename it and/or delete the .feature file that generates it.
 
-namespace {tag};
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using {stepNamespace};
 " + sb.ToString());
 
         // here we add a bunch of debug information the markdown loag.
@@ -536,6 +624,16 @@ using {stepNamespace};
         File.WriteAllText(outputFile + ".md", log.ToString());
 
         File.WriteAllText(outputFile + ".json", doc.json());
+
+        var mpath = outputFile + ".missing.cs";
+        if (c.stubSteps.Count() > 0)
+        {
+            c.writeMissing(mpath);
+        }
+        else
+        {
+            File.Delete(mpath);
+        }
     }
 
 }

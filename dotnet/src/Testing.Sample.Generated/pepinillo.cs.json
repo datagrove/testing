@@ -1,7 +1,7 @@
 {
   "feature": [
     {
-      "path": "/Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature",
+      "path": "/Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature",
       "source": "Feature: Calculator\n\n  Background: \n    Given I have a calculator\n\n  Scenario Outline: Add two numbers\n    Given I have numbers \u003Ca\u003E and \u003Cb\u003E as input\n    And I add more numbers\n      | number |\n      |      1 |\n      |      2 |\n    Then I should get an output of \u003Cc\u003E\n\n    Examples: \n      | a | b | c |\n      | 1 | 2 | 6 |\n      | 2 | 3 | 8 |\n",
       "qualified_name": "As1..Calculator",
       "background": [
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "path": "/Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature",
+      "path": "/Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature",
       "source": "Feature: Calculator\n\nScenario: google calculator\n    Given url is \u0022https://www.google.com\u0022\n    When I enter \u00222\u002B2\u0022 into the search box\n    And I click the search button\n    Then I should see \u00224\u0022 in the results\n\n",
       "qualified_name": "As1..Calculator1",
       "background": [],
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "path": "/Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature",
+      "path": "/Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature",
       "source": "Feature: Rest\n\nScenario: Dog api\n    Given I have a dog api\n    When I send a GET request to \u0022/api/breeds/list/all\u0022\n    Then the response code should be 200\n    And the response should be in JSON\n    And the response should contain \u0022affenpinscher\u0022\n\n",
       "qualified_name": "As1..Rest",
       "background": [],

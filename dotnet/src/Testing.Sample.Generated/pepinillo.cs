@@ -2,17 +2,15 @@
 
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Datagrove.Testing.Sample;
 
-// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature
+// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Calc.feature
 [TestClass()]
 
-public class Calculator
+public class Calculator 
 {
     public TestContext? TestContext { get; set; }
-
-    public class Steps
-    {
+    
+    public class Steps {
         internal Datagrove.Testing.Sample.CalculatorSteps calculatorSteps;
 
         public Steps(ScenarioState context)
@@ -21,9 +19,9 @@ public class Calculator
 
         }
 
-        public async Task initialize()
+        public async Task background()
         {
-            var step = this;
+            var step=this;
             step.calculatorSteps.I_have_a_calculator();
 
 
@@ -34,56 +32,53 @@ public class Calculator
     [TestMethod()]
     public async Task Add_two_numbers()
     {
-        await using (var context = new ScenarioState(TestContext!))
-        {
-            var step = new Steps(context);
-            await step.initialize();
-            await step.calculatorSteps.I_have_and_as_input(1, 2);
+    await using (var context = new ScenarioState(TestContext!)){
+        var step = new Steps(context);
+        await step.background();
+        await step.calculatorSteps.I_have_and_as_input(1,2);
 
-            await step.calculatorSteps.I_add_more_numbers(GherkinTable.make(new string[] { "number" }, new string[] { "1", "2" }));
+        await step.calculatorSteps.I_add_more_numbers(GherkinTable.make( new string[]{ "number" },  new string[]{ "1","2" }));
 
-            step.calculatorSteps.I_should_get_an_output_of(6);
+        step.calculatorSteps.I_should_get_an_output_of(6);
 
         }
     }
     [TestMethod()]
     public async Task Add_two_numbers__1()
     {
-        await using (var context = new ScenarioState(TestContext!))
-        {
-            var step = new Steps(context);
-            await step.initialize();
-            await step.calculatorSteps.I_have_and_as_input(2, 3);
+    await using (var context = new ScenarioState(TestContext!)){
+        var step = new Steps(context);
+        await step.background();
+        await step.calculatorSteps.I_have_and_as_input(2,3);
 
-            await step.calculatorSteps.I_add_more_numbers(GherkinTable.make(new string[] { "number" }, new string[] { "1", "2" }));
+        await step.calculatorSteps.I_add_more_numbers(GherkinTable.make( new string[]{ "number" },  new string[]{ "1","2" }));
 
-            step.calculatorSteps.I_should_get_an_output_of(8);
+        step.calculatorSteps.I_should_get_an_output_of(8);
 
         }
     }
 
-
+    
 }
 
-// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature
+// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Browser.feature
 [TestClass()]
 
-public class Calculator1
+public class Calculator1 
 {
     public TestContext? TestContext { get; set; }
-
-    public class Steps
-    {
+    
+    public class Steps {
 
         public Steps(ScenarioState context)
         {
 
         }
 
-        public async Task initialize()
+        public async Task background()
         {
-            var step = this;
-
+            var step=this;
+            
             await Task.CompletedTask;
         }
     }
@@ -91,35 +86,37 @@ public class Calculator1
     [TestMethod()]
     public async Task google_calculator()
     {
-        await using (var context = new ScenarioState(TestContext!))
-        {
-            var step = new Steps(context);
-            await step.initialize();
+    await using (var context = new ScenarioState(TestContext!)){
+        var step = new Steps(context);
+        await step.background();
+        new MissingStep().url_is__https___www_google_com_();
+        new MissingStep().I_enter__2_2__into_the_search_box();
+        new MissingStep().I_click_the_search_button();
+        new MissingStep().I_should_see__4__in_the_results();
         }
     }
 
-
+    
 }
 
-// /Users/jim/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature
+// /Users/jimhurd/dev/datagrove/testing/dotnet/src/Testing.Sample/feature/Rest.feature
 [TestClass()]
 
-public class Rest
+public class Rest 
 {
     public TestContext? TestContext { get; set; }
-
-    public class Steps
-    {
+    
+    public class Steps {
 
         public Steps(ScenarioState context)
         {
 
         }
 
-        public async Task initialize()
+        public async Task background()
         {
-            var step = this;
-
+            var step=this;
+            
             await Task.CompletedTask;
         }
     }
@@ -127,12 +124,16 @@ public class Rest
     [TestMethod()]
     public async Task Dog_api()
     {
-        await using (var context = new ScenarioState(TestContext!))
-        {
-            var step = new Steps(context);
-            await step.initialize();
+    await using (var context = new ScenarioState(TestContext!)){
+        var step = new Steps(context);
+        await step.background();
+        new MissingStep().I_have_a_dog_api();
+        new MissingStep().I_send_a_GET_request_to___api_breeds_list_all_();
+        new MissingStep().the_response_code_should_be_200();
+        new MissingStep().the_response_should_be_in_JSON();
+        new MissingStep().the_response_should_contain__affenpinscher_();
         }
     }
 
-
+    
 }
