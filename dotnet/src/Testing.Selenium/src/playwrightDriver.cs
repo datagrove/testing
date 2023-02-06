@@ -75,6 +75,12 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
                 p.playwright = await Playwright.CreateAsync();
                 p.browser = await p.options.createBrowser(p.playwright);
                 p.context = await p.browser.NewContextAsync(p.options.contextOptions);
+                await p.context.Tracing.StartAsync(new TracingStartOptions
+                {
+                    Screenshots = true,
+                    Snapshots = true,
+                });
+                p.page = await p.context.NewPageAsync();
         }
         while (!p.quit)
         {

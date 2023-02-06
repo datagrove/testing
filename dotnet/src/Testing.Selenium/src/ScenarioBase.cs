@@ -8,6 +8,7 @@ using Microsoft.Playwright;
 
 // This is a statically typed dependency injection container, if you care about that sort of thing
 
+
 public class PlaywrightScenarioBase : IAsyncDisposable
 {
 

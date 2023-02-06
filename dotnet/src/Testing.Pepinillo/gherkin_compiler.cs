@@ -236,7 +236,7 @@ public class GherkinCompiler
 
     public void compile(Compiled compiled, string file, StepSet ss, Namer nm, BuildGherkin bg, GherkinDocumentation docm)
     {
-        var StepState = bg.scenarioState ?? "ScenarioState";
+        var StepState = bg.scenarioState;
         var parser = new Parser();
         try
         {
@@ -341,7 +341,7 @@ public class GherkinCompiler
                         methods.WriteLine(bg.TestMethod());
                         methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
-                        methods.WriteLine($"await using (var context = new {StepState}(TestContext!)){{");
+                        methods.WriteLine($"await using (var context = await {StepState}.create(TestContext!)){{");
 
                         methods.Indent++;
                         methods.WriteLine("var step = new Steps(context);");
@@ -403,11 +403,7 @@ public class GherkinCompiler
                 var nm3 = ss.usingNamespace[cn];
                 var nmx = nm3.Substring(0, 1).ToLower() + nm3.Substring(1);
                 member += $"        internal {cn} {nmx};\n";
-                if (true)
-                {
-                    featureConstructor += $"            {nmx} = new {cn}();\n";
-                }
-                else if ("inventoryReceiptsStepDef" != nmx)
+                if ("inventoryReceiptsStepDef" != nmx)
                 {
                     featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context);\n";
                 }
@@ -560,6 +556,7 @@ public class BuildGherkin
 
     public BuildGherkin config(string indir, string? outdir, string name, PepinilloConfig? cfg = null)
     {
+        this.scenarioState = cfg?.scenarioState ?? "ScenarioState";
         this.tag = name;
         this.root = root;
         this.cfg = cfg;
@@ -596,14 +593,7 @@ public class BuildGherkin
     public  BuildGherkin build()
     {
         Directory.CreateDirectory(outdir);
-        new DirectoryInfo(outdir).GetFileSystemInfos().ToList().ForEach(x =>
-        {
-            if (x is DirectoryInfo di)
-                di.Delete(true);
-            else
-                x.Delete();
-        });
-        File.WriteAllText(outdir + "/readme.md", "This is a generated project. Do not edit it directly. Instead, edit the source project and recompile.");
+
 
 var csproj = $"""
     <Project Sdk="Microsoft.NET.Sdk">
@@ -630,7 +620,18 @@ var csproj = $"""
 
     </Project>
     """;
-   File.WriteAllText(outdir + "/"+projectName, csproj);
+    if (false) {
+        // delete all the files and create a new project
+        new DirectoryInfo(outdir).GetFileSystemInfos().ToList().ForEach(x =>
+                {
+                    if (x is DirectoryInfo di)
+                        di.Delete(true);
+                    else
+                        x.Delete();
+                });
+                File.WriteAllText(outdir + "/readme.md", "This is a generated project. Do not edit it directly. Instead, edit the source project and recompile.");
+        File.WriteAllText(outdir + "/"+projectName, csproj);
+    }
 
         if (featureFolder.Count() == 0)
         {
