@@ -14,8 +14,9 @@ using System.Text.Json;
 using static SimpleExec.Command;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
-public class FileUtil {
-        static public string findFirstFile(string dir, string pattern)
+public class FileUtil
+{
+    static public string findFirstFile(string dir, string pattern)
     {
         var matcher = new Matcher();
         matcher.AddInclude(pattern);
@@ -28,16 +29,16 @@ public class FileUtil {
                 if (f.Path.EndsWith(".csproj"))
                 {
                     return f.Path;
-
                 }
             }
         }
         return "";
     }
 
-    public static string projectPath(string dir) {
-       var csproj = FileUtil.findFirstFile(dir, "*.csproj");
-       return csproj==null?"": $"{dir}/{csproj}";
+    public static string projectPath(string dir)
+    {
+        var csproj = FileUtil.findFirstFile(dir, "*.csproj");
+        return csproj == null ? "" : $"{dir}/{csproj}";
     }
     public static Assembly? assemblyFromDirectory(string dir)
     {
@@ -66,25 +67,34 @@ public class Pepin
         var a = new Assembly[] { amaybe };
 
         PepinilloConfig? s = null;
-        try
+
+        var config = path + "/pepin.config.json";
+        if (File.Exists(config))
         {
-            using FileStream stream = File.OpenRead(path + "/pepin.config.json");
-            s = await JsonSerializer.DeserializeAsync<PepinilloConfig>(stream);
+            try
+            {
+                using FileStream stream = File.OpenRead(config);
+                s = await JsonSerializer.DeserializeAsync<PepinilloConfig>(stream);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Environment.Exit(-1);
+            }
         }
-        catch (Exception) { }
 
         // create the compiled projects
         string? outdir = null; // todo!! allow on command line, also pick one project from command line
         if (s == null)
         {
             // no config, use defaults
-             new BuildGherkin(a).config(path, outdir,"pepinillo").build();
+            new BuildGherkin(a).config(path, outdir, "pepinillo").build();
         }
         else
         {
             if (s.project == null || s.project.Count() == 0)
             {
-                new BuildGherkin(a).config(path, outdir, "pepinillo",s).build();
+                new BuildGherkin(a).config(path, outdir, "pepinillo", s).build();
             }
             else
             {
@@ -146,6 +156,14 @@ public class TransformArg
             return false;
         }
         return false;
+    }
+}
+public class StepClass {
+    public string name;
+    public string[] constructorArgs;
+    public StepClass(string name, string[] constructorArgs) {
+        this.name = name;
+        this.constructorArgs = constructorArgs;
     }
 }
 public class Namer
@@ -261,7 +279,7 @@ public class GherkinCompiler
             var nmr = new Namer();
 
             // each step has a class and we need to collect them to add them as members to the class.
-            var stepClass = new HashSet<string>();
+            var stepClass = new Dictionary<string,StepClass>();
             var appendStep = (Step step, string text, IndentedTextWriter tw) =>
             {
                 var cstep = ss.compile(step, text, (string w) => compiled(file, "", w));
@@ -270,7 +288,8 @@ public class GherkinCompiler
                     var error = $"\n## Not found\n{text}\n";
                     compiled(file, "", error);
                     var st = new MissingStep(step);
-                    stubSteps.Add(step.Text, st);
+                    if (!stubSteps.ContainsKey(step.Text))
+                        stubSteps.Add(step.Text, st);
                     tw.WriteLine(st.stepCall());
                     // for debugging
                     var cstep2 = ss.compile(step, text, (string w) => compiled(file, "", w));
@@ -278,10 +297,22 @@ public class GherkinCompiler
                 else
                 {
                     docm.addStep(cstep);
-                    stepClass.Add(cstep.step.classType.FullName ?? cstep.step.classType.Name);
-                    // backgrounds don't initialize, they only use the members.
                     tw.WriteLine(cstep.csharp);
-                    //methods.WriteLine($"shot(\"{Uri.EscapeDataString(text.Replace(' ', '_'))}\");");
+                    var cname = cstep.step.classType.FullName ?? cstep.step.classType.Name;
+                    if (!stepClass.ContainsKey(cname)){
+                        var args = new string[] { };
+                        ConstructorInfo[] ci = cstep.step.classType.GetConstructors();
+                        if (ci.Length > 0){
+                         var p = ci[0].GetParameters();
+                         args = p.Select((e) => e.Name??"").ToArray();
+                        }
+                        StepClass scx = new StepClass(cname, args??new string[]{});
+
+                        stepClass.Add(scx.name,scx);
+                        // backgrounds don't initialize, they only use the members.
+
+                        //methods.WriteLine($"shot(\"{Uri.EscapeDataString(text.Replace(' ', '_'))}\");");
+                    }
                 }
             };
             foreach (var ch in doc.Feature.Children)
@@ -395,22 +426,33 @@ public class GherkinCompiler
                 }
             }
 
+            // we have to match the constructor to the StepState
+            // we can substitute all the constructor arguments x[i] with context.x[i]
+
             var member = "";
             var featureConstructor = "";
-            foreach (var cn in stepClass)
+            foreach (var kv in stepClass)
             {
                 // substitute short names
+                var cn = kv.Key;
+                StepClass sc = kv.Value;
+
                 var nm3 = ss.usingNamespace[cn];
                 var nmx = nm3.Substring(0, 1).ToLower() + nm3.Substring(1);
                 member += $"        internal {cn} {nmx};\n";
-                if ("inventoryReceiptsStepDef" != nmx)
-                {
-                    featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context);\n";
-                }
-                else
-                {
-                    featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context,context.scenario);\n";
-                }
+
+                var args = sc.constructorArgs.Select(e => $"context.{e}").ToList();
+                var args2 = String.Join(',', args);
+                featureConstructor = $"            {nmx} = new {cn}({args2});\n";
+
+                // if ("inventoryReceiptsStepDef" != nmx)
+                // {
+                //     featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context);\n";
+                // }
+                // else
+                // {
+                //     featureConstructor += $"            {nmx} = new {cn}(context.driver,context.context,context.scenario);\n";
+                // }
             }
 
 
@@ -550,7 +592,7 @@ public class BuildGherkin
     PepinilloConfig? cfg;
     string outputStem = "";
     string projectName = "";
-    string inCsproj ="";
+    string inCsproj = "";
 
     public string scenarioState { get; set; } = "";
 
@@ -569,7 +611,7 @@ public class BuildGherkin
 
         // we should make this relative to the project
         this.inCsproj = FileUtil.projectPath(indir);
-        
+
         this.baseTest = cfg?.baseTest ?? "";
         this.scenarioState = cfg?.scenarioState ?? "ScenarioState";
         if (baseTest != "")
@@ -577,7 +619,7 @@ public class BuildGherkin
             baseTest = ": " + baseTest;
         }
         // this supports the case of arbitrary output directories
-        projectName  = outdir.Split(Path.DirectorySeparatorChar).Last()+".csproj";
+        projectName = outdir.Split(Path.DirectorySeparatorChar).Last() + ".csproj";
         this.outputStem = this.outdir + "/" + this.tag;
         return this;
     }
@@ -590,12 +632,12 @@ public class BuildGherkin
         return this;
     }
 
-    public  BuildGherkin build()
+    public BuildGherkin build()
     {
         Directory.CreateDirectory(outdir);
 
 
-var csproj = $"""
+        var csproj = $"""
     <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
@@ -620,18 +662,19 @@ var csproj = $"""
 
     </Project>
     """;
-    if (false) {
-        // delete all the files and create a new project
-        new DirectoryInfo(outdir).GetFileSystemInfos().ToList().ForEach(x =>
-                {
-                    if (x is DirectoryInfo di)
-                        di.Delete(true);
-                    else
-                        x.Delete();
-                });
-                File.WriteAllText(outdir + "/readme.md", "This is a generated project. Do not edit it directly. Instead, edit the source project and recompile.");
-        File.WriteAllText(outdir + "/"+projectName, csproj);
-    }
+        if (false)
+        {
+            // delete all the files and create a new project
+            new DirectoryInfo(outdir).GetFileSystemInfos().ToList().ForEach(x =>
+                    {
+                        if (x is DirectoryInfo di)
+                            di.Delete(true);
+                        else
+                            x.Delete();
+                    });
+            File.WriteAllText(outdir + "/readme.md", "This is a generated project. Do not edit it directly. Instead, edit the source project and recompile.");
+            File.WriteAllText(outdir + "/" + projectName, csproj);
+        }
 
         if (featureFolder.Count() == 0)
         {
@@ -658,7 +701,7 @@ var csproj = $"""
         // not needed because we use fully qualified
         // + c.ss.usingText() 
         var stem = Path.GetFileName(root);
-        File.WriteAllText(outputStem+".cs", $@"// File generated by Pepinillo, If you edit this file, rename it and/or delete the .feature file that generates it.
+        File.WriteAllText(outputStem + ".cs", $@"// File generated by Pepinillo, If you edit this file, rename it and/or delete the .feature file that generates it.
 
 #nullable enable
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -669,7 +712,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
         File.WriteAllText(outputStem + ".md", log.ToString());
 
         File.WriteAllText(outputStem + ".json", doc.json());
-        var mpath = outdir + "/"+tag+(tag==""?"":".")+"MissingStep.cs";
+        var mpath = outdir + "/" + tag + (tag == "" ? "" : ".") + "MissingStep.cs";
         if (c.stubSteps.Count() > 0)
         {
             c.writeMissing(mpath);
@@ -678,7 +721,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
         {
             File.Delete(mpath);
         }
-    return this;
+        return this;
     }
 
 }

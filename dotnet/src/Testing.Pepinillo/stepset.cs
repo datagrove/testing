@@ -95,7 +95,7 @@ public class StepSet
 
                     foreach (var o in stepSpace)
                     {
-                        if (sp.StartsWith(o + "."))
+                        if (sp==o || sp.StartsWith(o + "."))
                         {
                             match = true;
                             break;
