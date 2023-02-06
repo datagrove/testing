@@ -114,7 +114,7 @@ public class Pepin
 // each step is part of a class that will get initialized
 // [Scope("gherkin_tag")]
 // potentially add gherkin tags based on folder hierarchy
-// naming base on first tag is bad idea? at best its asi specific.
+// naming base on first tag is bad idea?
 
 // asi tests use table, so we need to give them a table.
 
@@ -158,10 +158,12 @@ public class TransformArg
         return false;
     }
 }
-public class StepClass {
+public class StepClass
+{
     public string name;
     public string[] constructorArgs;
-    public StepClass(string name, string[] constructorArgs) {
+    public StepClass(string name, string[] constructorArgs)
+    {
         this.name = name;
         this.constructorArgs = constructorArgs;
     }
@@ -279,7 +281,7 @@ public class GherkinCompiler
             var nmr = new Namer();
 
             // each step has a class and we need to collect them to add them as members to the class.
-            var stepClass = new Dictionary<string,StepClass>();
+            var stepClass = new Dictionary<string, StepClass>();
             var appendStep = (Step step, string text, IndentedTextWriter tw) =>
             {
                 var cstep = ss.compile(step, text, (string w) => compiled(file, "", w));
@@ -299,16 +301,18 @@ public class GherkinCompiler
                     docm.addStep(cstep);
                     tw.WriteLine(cstep.csharp);
                     var cname = cstep.step.classType.FullName ?? cstep.step.classType.Name;
-                    if (!stepClass.ContainsKey(cname)){
+                    if (!stepClass.ContainsKey(cname))
+                    {
                         var args = new string[] { };
                         ConstructorInfo[] ci = cstep.step.classType.GetConstructors();
-                        if (ci.Length > 0){
-                         var p = ci[0].GetParameters();
-                         args = p.Select((e) => e.Name??"").ToArray();
+                        if (ci.Length > 0)
+                        {
+                            var p = ci[0].GetParameters();
+                            args = p.Select((e) => e.Name ?? "").ToArray();
                         }
-                        StepClass scx = new StepClass(cname, args??new string[]{});
+                        StepClass scx = new StepClass(cname, args ?? new string[] { });
 
-                        stepClass.Add(scx.name,scx);
+                        stepClass.Add(scx.name, scx);
                         // backgrounds don't initialize, they only use the members.
 
                         //methods.WriteLine($"shot(\"{Uri.EscapeDataString(text.Replace(' ', '_'))}\");");
