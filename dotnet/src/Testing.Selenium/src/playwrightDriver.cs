@@ -75,11 +75,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
                 p.playwright = await Playwright.CreateAsync();
                 p.browser = await p.options.createBrowser(p.playwright);
                 p.context = await p.browser.NewContextAsync(p.options.contextOptions);
-                await p.context.Tracing.StartAsync(new TracingStartOptions
-                {
-                    Screenshots = true,
-                    Snapshots = true,
-                });
+                await p.context.Tracing.StartAsync(p.options.tracingOptions);
                 p.page = await p.context.NewPageAsync();
         }
         while (!p.quit)
@@ -100,6 +96,10 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         }
 
         if (p.options!=null) {
+            await p.context.Tracing.StopAsync(new TracingStopOptions
+            {
+                Path = p.options.trace,
+            });
             await p.context.DisposeAsync();
             await p.browser.DisposeAsync();
             p.playwright.Dispose();
