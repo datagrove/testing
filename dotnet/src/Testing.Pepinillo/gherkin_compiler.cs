@@ -447,7 +447,7 @@ public class GherkinCompiler
 
                 var args = sc.constructorArgs.Select(e => $"context.{e}").ToList();
                 var args2 = String.Join(',', args);
-                featureConstructor = $"            {nmx} = new {cn}({args2});\n";
+                featureConstructor += $"            {nmx} = new {cn}({args2});\n";
 
                 // if ("inventoryReceiptsStepDef" != nmx)
                 // {
