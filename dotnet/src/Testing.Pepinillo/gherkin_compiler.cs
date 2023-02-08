@@ -525,12 +525,13 @@ public class GherkinCompiler
         return doc;
     }
 
-    public string[] findFeatures(string[] dir)
+    public string[] findFeatures(string indir, string[] dir)
     {
         var r = new List<string>();
         foreach (var o in dir)
         {
-            r = r.Concat(Directory.GetFiles(o,
+            var op = Path.Join(indir, o);
+            r = r.Concat(Directory.GetFiles(op,
                             "*.feature",
                             SearchOption.AllDirectories)).ToList();
         }
@@ -599,9 +600,11 @@ public class BuildGherkin
     string inCsproj = "";
 
     public string scenarioState { get; set; } = "";
+    public string indir { get; set; } = "";
 
     public BuildGherkin config(string indir, string? outdir, string name, PepinilloConfig? cfg = null)
     {
+        this.indir = indir;
         this.scenarioState = cfg?.scenarioState ?? "ScenarioState";
         this.tag = name;
         this.root = root;
@@ -698,7 +701,7 @@ public class BuildGherkin
         };
 
         var c = new GherkinCompiler(stepSpace, assembly);
-        var fl = c.findFeatures(featureFolder);
+        var fl = c.findFeatures(indir, featureFolder);
         Console.Write($"{fl.Count()} feature files.");
         var doc = c.compile(compiled, fl, this);
 

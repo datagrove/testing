@@ -9,6 +9,10 @@ class Program
             name: "--verbose",
             description: "log verbosely");
 
+        var projectArgument = new Argument<string>(
+            name: "project",
+            description: "source project");
+        projectArgument.Arity = ArgumentArity.ZeroOrOne;
 
         var rootCommand = new RootCommand("Pepin compiler for Cucumber language");
         //rootCommand.AddOption(fileOption);
@@ -17,21 +21,22 @@ class Program
             {
                 verboseOption,
             };
-        rootCommand.AddCommand(buildCommand);
+        buildCommand.Add(projectArgument);
+        rootCommand.Add(buildCommand);
 
-        buildCommand.SetHandler(async (verbose) =>
+        buildCommand.SetHandler(async (project, verbose) =>
             {
-                await Build(verbose);
+                await Build(project, verbose);
             },
+            projectArgument,
             verboseOption);
-
-
 
         return rootCommand.InvokeAsync(args).Result;
     }
 
-    internal static async Task Build(bool verbose)
+    internal static async Task Build(string? project, bool verbose)
     {
-        await Pepin.build(Directory.GetCurrentDirectory());
+        project ??= Directory.GetCurrentDirectory();
+        await Pepin.build(project);
     }
 }
