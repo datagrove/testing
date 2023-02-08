@@ -22,6 +22,7 @@ Obvious, but [install dotnet first](dotnet.microsoft.com)
 ## Install Pepinillo
 
 ```
+*TODO* doesn't work
 dotnet new pepinillo --name "pepinillo"
 cd pepinillio
 dotnet test
@@ -36,6 +37,13 @@ dotnet test
 dotnet new pepinillo.playwright --name "pepin_play"
 cd pepin_play
 dotnet test
+```
+
+Build pepin from source
+```
+dotnet tool uninstall testing.pepin -g
+dotnet pack dotnet/src/Testing.Pepin
+dotnet tool install --global --add-source dotnet/src/Testing.Pepin/nupkg Testing.Pepin
 ```
 
 
