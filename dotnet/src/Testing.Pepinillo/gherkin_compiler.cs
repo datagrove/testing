@@ -43,6 +43,9 @@ public class FileUtil
     public static Assembly? assemblyFromDirectory(string dir)
     {
         var csproj = FileUtil.findFirstFile(dir, "*.csproj");
+        if (csproj=="") {
+            throw new Exception("No project found");
+        }
         var cmd = $"build \"{dir}/{csproj}\"";
         SimpleExec.Command.Run("dotnet", cmd);
         var fn = Path.GetFileNameWithoutExtension(csproj);
@@ -376,6 +379,8 @@ public class GherkinCompiler
                         methods.WriteLine(bg.TestMethod());
                         methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
+                        methods.WriteLine("try {");
+                        methods.Indent++;
                         methods.WriteLine($"await using (var context = await {StepState}.create(TestContext!)){{");
 
                         methods.Indent++;
@@ -392,6 +397,13 @@ public class GherkinCompiler
                         }
 
                         methods.WriteLine("}");
+                        methods.Indent--;
+                        methods.WriteLine("} catch(Exception e){");
+                        methods.Indent++;
+                        methods.WriteLine("throw e;");
+                        methods.Indent--;
+                        methods.Write("}");
+
                         methods.Indent--;
                         methods.WriteLine("}");
                         exn++;
