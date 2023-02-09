@@ -151,50 +151,59 @@ namespace Datagrove.Testing.Boa
         /// <param name="driver">The WebDriver.</param>
         public override void PerformAs(IActor actor, IWebDriver driver)
         {
-            // Wait for the element to exist
-            actor.WaitsUntil(Appearance.Of(Locator), IsEqualTo.True());
-
-            // Get the element
-            IWebElement element = driver.FindElement(Locator.Query);
-
-            // Clear the element if appropriate
-            if (Clear)
+            //  we don't need to get an element here like selenium, instead use a locator
+            var s = Locator.Query.Criteria;
+            var d = (PlaywrightDriver)driver;
+            d.exec<bool>(async Task<object> (PlaywrightDriver p) =>
             {
-                if (UseClearMethod)
-                {
-                    // Use the plain-old "Clear" method
-                    element.Clear();
-                }
-                else
-                {
-                    // How many backspaces should be sent?
-                    // One for each character in the input!
-                    int length = element.GetAttribute("value").Length;
+                // this could be a frame or a page
+                await d.getLocator(s).FillAsync(Keystrokes);
+                return true;
+             });
+            // // Wait for the element to exist
+            // actor.WaitsUntil(Appearance.Of(Locator), IsEqualTo.True());
 
-                    if (length > 0)
-                    {
-                        // Send the backspaces
-                        string backspaces = string.Concat(Enumerable.Repeat(Keys.Backspace, length));
-                        element.SendKeys(backspaces);
+            // // Get the element
+            // IWebElement element = driver.FindElement(Locator.Query);
 
-                        // The browser may put the cursor to the left instead of the right
-                        // Do the same thing for delete button
-                        string deletes = string.Concat(Enumerable.Repeat(Keys.Delete, length));
-                        element.SendKeys(deletes);
-                    }
-                }
-            }
+            // // Clear the element if appropriate
+            // if (Clear)
+            // {
+            //     if (UseClearMethod)
+            //     {
+            //         // Use the plain-old "Clear" method
+            //         element.Clear();
+            //     }
+            //     else
+            //     {
+            //         // How many backspaces should be sent?
+            //         // One for each character in the input!
+            //         int length = element.GetAttribute("value").Length;
 
-            // Send the keys to the element
-            element.SendKeys(Keystrokes);
+            //         if (length > 0)
+            //         {
+            //             // Send the backspaces
+            //             string backspaces = string.Concat(Enumerable.Repeat(Keys.Backspace, length));
+            //             element.SendKeys(backspaces);
 
-            // Hit the ENTER key if applicable
-            if (FinalEnter)
-                element.SendKeys(Keys.Enter);
+            //             // The browser may put the cursor to the left instead of the right
+            //             // Do the same thing for delete button
+            //             string deletes = string.Concat(Enumerable.Repeat(Keys.Delete, length));
+            //             element.SendKeys(deletes);
+            //         }
+            //     }
+            // }
 
-            // Click on the final "safe" element if given
-            if (FinalElement != null)
-                actor.AttemptsTo(Click.On(FinalElement));
+            // // Send the keys to the element
+            // element.SendKeys(Keystrokes);
+
+            // // Hit the ENTER key if applicable
+            // if (FinalEnter)
+            //     element.SendKeys(Keys.Enter);
+
+            // // Click on the final "safe" element if given
+            // if (FinalElement != null)
+            //     actor.AttemptsTo(Click.On(FinalElement));
         }
 
         /// <summary>

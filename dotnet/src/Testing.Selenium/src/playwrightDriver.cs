@@ -56,7 +56,13 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     public object? rvalue = null;
     public IElementHandle? current = null;
 
-
+    public ILocator getLocator(string s) {
+        if (frame==null) {
+            return page.Locator(s).First;
+        } else {
+            return frame.Page.Locator(s).First;
+        }
+    }
 
     public void Perform(List<Func<PlaywrightDriver, Task<object>>> fn)
     {
@@ -162,6 +168,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     }
     public T exec<T>(Func<PlaywrightDriver,Task<object>> fn)
     {
+        Microsoft.Playwright.PlaywrightException ethrow;
         for (int i = 0; i < 10; i++)
         {
             try
@@ -170,6 +177,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
             }
             catch (Microsoft.Playwright.PlaywrightException e)
             {
+                ethrow = e; 
                 if (e.Message.Contains("context was destroyed") || e.Message.Contains("attached") || e.Message.Contains("navigating") || e.Message.Contains("detached"))
                 {
                     Thread.Sleep(100);
@@ -685,7 +693,7 @@ public class PWebElement : IWebElement, IFindsElement, IWrapsDriver //, IWebDriv
     {
         driver.exec<bool>(async Task<object> (PlaywrightDriver p) =>
         {
-            await h.FillAsync(text);
+            await h.TypeAsync(text);
             return true;
         });
     }
@@ -798,23 +806,23 @@ public class PwAlert : IAlert
     {
         get
         {
-            return "";
+        throw new NotImplementedException();
         }
     }
 
     public void Accept()
     {
-
+        throw new NotImplementedException();
     }
 
     public void Dismiss()
     {
-
+        throw new NotImplementedException();
     }
 
     public void SendKeys(string keysToSend)
     {
-
+        throw new NotImplementedException();
     }
 }
 
