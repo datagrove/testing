@@ -152,7 +152,8 @@ public class Actions
         actions.Add(async (proxy) =>
         {
             var x = proxy.current; if (x == null) return false;
-            await x.ClickAsync();
+            ElementHandleClickOptions options = new() { Force = true };
+            await x.ClickAsync(options);
             return true;
         });
         return this;
@@ -186,7 +187,8 @@ public class Actions
         actions.Add(async (proxy) =>
         {
             proxy.current = e;
-            await e.HoverAsync();
+            var options = new ElementHandleHoverOptions { Force = true };
+            await e.HoverAsync(options);
             return true;
         });
         return this;

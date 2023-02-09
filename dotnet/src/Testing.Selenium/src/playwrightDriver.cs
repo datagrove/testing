@@ -510,26 +510,13 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     }
     public IWebDriver Frame(string frameName)
     {
-        var f = frame;
-        frame = exec<IFrame?>(async Task<object> (PlaywrightDriver p) =>
-        {
-            if (f == null)
-            {
-                var h = await page.Locator(By.Name(frameName).description).ElementHandleAsync();
-                if (h != null) return await h.ContentFrameAsync();
-                else return null;
+        for (var i=0; i<30; i++) {
+            var h =  FindElements(By.Name(frameName));
+            if (h.Count > 0) {
+                Frame(h[0]);
+                break;
             }
-            else
-            {
-                var h = await f.Page.Locator(By.Name(frameName).description).ElementHandleAsync();
-                if (h != null) return await h.ContentFrameAsync();
-                else return null;
-            }
-        });
-
-        if (frame == null)
-            throw new NoSuchFrameException();
-
+        }
         return this;
     }
 
