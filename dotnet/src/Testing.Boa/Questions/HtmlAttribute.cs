@@ -42,8 +42,11 @@ namespace Datagrove.Testing.Boa
         /// <returns></returns>
         public override string RequestAs(IActor actor, IWebDriver driver)
         {
-            actor.WaitsUntil(Existence.Of(Locator), IsEqualTo.True());
-            return driver.FindElement(Locator.Query).GetAttribute(PropertyName);
+            var d = (PlaywrightDriver)driver;
+            var s = d.GetAttribute(Locator.Query.Criteria, PropertyName);
+            return s;
+            // actor.WaitsUntil(Existence.Of(Locator), IsEqualTo.True());
+            // return driver.FindElement(Locator.Query).GetAttribute(PropertyName);
         }
 
         /// <summary>

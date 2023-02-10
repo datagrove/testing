@@ -41,8 +41,11 @@ namespace Datagrove.Testing.Boa
         /// <param name="driver">The WebDriver.</param>
         public override void PerformAs(IActor actor, IWebDriver driver)
         {
-            actor.WaitsUntil(Appearance.Of(Locator), IsEqualTo.True());
-            new Actions(driver).MoveToElement(driver.FindElement(Locator.Query)).Click().Perform();
+            var s = Locator.Query.Criteria;
+            var d = (PlaywrightDriver)driver;
+            d.Click(s);
+            // actor.WaitsUntil(Appearance.Of(Locator), IsEqualTo.True());
+            // new Actions(driver).MoveToElement(driver.FindElement(Locator.Query)).Click().Perform();
         }
 
         /// <summary>

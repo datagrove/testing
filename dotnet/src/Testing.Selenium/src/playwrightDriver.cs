@@ -10,15 +10,18 @@ using Datagrove.Testing.Selenium;
 // a selenium driver can control multiple windows, but the chrome profile is selected when the driver is created. It maps closely to the idea of a playwright context. Within the context the current frame and window are set as state. api's that return a webdriver are typically just returning the same webdriver for use as fluent api.
 
 
-public class FirefoxDriver : PlaywrightDriver {
-    public FirefoxDriver(string _,FirefoxOptions? options)
-        :base(options?.options()){}
+public class FirefoxDriver : PlaywrightDriver
+{
+    public FirefoxDriver(string _, FirefoxOptions? options)
+        : base(options?.options()) { }
 }
-public class ChromeDriver : PlaywrightDriver {
-    public ChromeDriver(string path="",ChromeOptions? options=null):base(options?.options()){}
+public class ChromeDriver : PlaywrightDriver
+{
+    public ChromeDriver(string path = "", ChromeOptions? options = null) : base(options?.options()) { }
 }
-public class WebkitDriver : PlaywrightDriver {
-    public WebkitDriver(string _,WebkitOptions? options):base(options?.options()){}
+public class WebkitDriver : PlaywrightDriver
+{
+    public WebkitDriver(string _, WebkitOptions? options) : base(options?.options()) { }
 }
 
 
@@ -56,11 +59,15 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     public object? rvalue = null;
     public IElementHandle? current = null;
 
-    public ILocator getLocator(string s) {
-        if (frame==null) {
+    public ILocator getLocator(string s)
+    {
+        if (frame == null)
+        {
             return page.Locator(s).First;
-        } else {
-            return frame.Page.Locator(s).First;
+        }
+        else
+        {
+            return frame.Locator(s).First;
         }
     }
 
@@ -77,12 +84,13 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     }
     public static async Task ThreadProc(PlaywrightDriver p)
     {
-        if (p.options!=null) {
-                p.playwright = await Playwright.CreateAsync();
-                p.browser = await p.options.createBrowser(p.playwright);
-                p.context = await p.browser.NewContextAsync(p.options.contextOptions);
-                await p.context.Tracing.StartAsync(p.options.tracingOptions);
-                p.page = await p.context.NewPageAsync();
+        if (p.options != null)
+        {
+            p.playwright = await Playwright.CreateAsync();
+            p.browser = await p.options.createBrowser(p.playwright);
+            p.context = await p.browser.NewContextAsync(p.options.contextOptions);
+            await p.context.Tracing.StartAsync(p.options.tracingOptions);
+            p.page = await p.context.NewPageAsync();
         }
         while (!p.quit)
         {
@@ -101,7 +109,8 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
             }
         }
 
-        if (p.options!=null) {
+        if (p.options != null)
+        {
             await p.context.Tracing.StopAsync(new TracingStopOptions
             {
                 Path = p.options.trace,
@@ -114,9 +123,85 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         p.reply.Release();
     }
 
+    public string GetAttribute(string locator, string attribute)
+    {
+        var s = exec<string>(async Task<object> (PlaywrightDriver p) =>
+         {
+             var options = new LocatorGetAttributeOptions()
+             {
+                 Timeout = 1000
+             };
 
+             // this could be a frame or a page
+             var s = "";
+             for (var i = 0; i < 3; i++)
+             {
+                 try
+                 {
+                     s = await getLocator(locator).GetAttributeAsync(attribute, options);
+                     break;
+                 }
+                 catch (Exception e)
+                 {
+                     var x = 3;
+                 }
+             }
+             return s;
+         });
+        return s;
+    }
+    public void Fill(string locator, string Keystrokes, bool clear=true)
+    {
+        exec<bool>(async Task<object> (PlaywrightDriver p) =>
+        {
+            var l = getLocator(locator);
+            bool ascii = true;
+            for (var i=0; i<Keystrokes.Length; i++) {
+                if (Keystrokes[i]>255) {
+                    ascii=false;
+                    break;
+                }
+            }
+            if (ascii && clear) {
+                await l.FillAsync(Keystrokes);
+                return true;
+            }
+            // this could be a frame or a page
+            // special keys must be handled
+            if (clear) {
+                await l.FillAsync("");
+            }
+            for (var i=0; i<Keystrokes.Length; i++)
+            {
+                var s = Keystrokes.Substring(i,1);
+                if (s[0] < 256)
+                    await l.TypeAsync(s);
+                else {
+                    if (s==Keys.Enter)
+                        await l.PressAsync("Enter");
+                    else 
+                        throw new NotImplementedException();          
+                }     
+            }
+            return true;
+        });
+    }
+    public void Click(string locator, bool force = true)
+    {
+        exec<bool>(async Task<object> (PlaywrightDriver p) =>
+        {
+            // this could be a frame or a page
+            var opt = new LocatorClickOptions()
+            {
+                Force = force
+            };
+            await getLocator(locator).ClickAsync(opt);
+            return true;
+        });
+    }
     // we need a driver constructor that lets us share a page with direct playwright calls. The caller is responsible to dispose these context.
-    public PlaywrightDriver(IBrowserContext browserContext, IPage page){
+    public PlaywrightDriver(IBrowserContext browserContext, IPage page)
+    {
         context = browserContext;
         this.page = page;
         Task.Run(async () => await ThreadProc(this));
@@ -124,8 +209,9 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     }
 
     // this starts in the normal selenium way; the driver will own the playwright instances and dispose of them.
-    public PlaywrightDriver(PlaywrightOptions? options){
-        this.options = options??new PlaywrightOptions();
+    public PlaywrightDriver(PlaywrightOptions? options)
+    {
+        this.options = options ?? new PlaywrightOptions();
         Task.Run(async () => await ThreadProc(this));
         reply.WaitOne();
     }
@@ -152,7 +238,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         Quit();
     }
 
-    public T exec2<T>( Func< PlaywrightDriver, Task<object>> fn)
+    public T exec2<T>(Func<PlaywrightDriver, Task<object>> fn)
     {
         e = null;
         this.fn.Clear();
@@ -166,7 +252,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
         }
         return (T)rvalue!;
     }
-    public T exec<T>(Func<PlaywrightDriver,Task<object>> fn)
+    public T exec<T>(Func<PlaywrightDriver, Task<object>> fn)
     {
         Microsoft.Playwright.PlaywrightException ethrow;
         for (int i = 0; i < 10; i++)
@@ -177,7 +263,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
             }
             catch (Microsoft.Playwright.PlaywrightException e)
             {
-                ethrow = e; 
+                ethrow = e;
                 if (e.Message.Contains("context was destroyed") || e.Message.Contains("attached") || e.Message.Contains("navigating") || e.Message.Contains("detached"))
                 {
                     Thread.Sleep(100);
@@ -518,9 +604,11 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
     }
     public IWebDriver Frame(string frameName)
     {
-        for (var i=0; i<30; i++) {
-            var h =  FindElements(By.Name(frameName));
-            if (h.Count > 0) {
+        for (var i = 0; i < 30; i++)
+        {
+            var h = FindElements(By.Name(frameName));
+            if (h.Count > 0)
+            {
                 Frame(h[0]);
                 break;
             }
@@ -806,7 +894,7 @@ public class PwAlert : IAlert
     {
         get
         {
-        throw new NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 

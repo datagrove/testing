@@ -154,12 +154,7 @@ namespace Datagrove.Testing.Boa
             //  we don't need to get an element here like selenium, instead use a locator
             var s = Locator.Query.Criteria;
             var d = (PlaywrightDriver)driver;
-            d.exec<bool>(async Task<object> (PlaywrightDriver p) =>
-            {
-                // this could be a frame or a page
-                await d.getLocator(s).FillAsync(Keystrokes);
-                return true;
-             });
+            d.Fill(s,Keystrokes,Clear);
             // // Wait for the element to exist
             // actor.WaitsUntil(Appearance.Of(Locator), IsEqualTo.True());
 
@@ -198,12 +193,12 @@ namespace Datagrove.Testing.Boa
             // element.SendKeys(Keystrokes);
 
             // // Hit the ENTER key if applicable
-            // if (FinalEnter)
-            //     element.SendKeys(Keys.Enter);
+            if (FinalEnter)
+                d.Fill(s,Keys.Enter,false);
 
             // // Click on the final "safe" element if given
-            // if (FinalElement != null)
-            //     actor.AttemptsTo(Click.On(FinalElement));
+            if (FinalElement != null)
+                 actor.AttemptsTo(Click.On(FinalElement));
         }
 
         /// <summary>
