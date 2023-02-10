@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,9 +13,11 @@ import (
 type UnitTest struct {
 	TestName string `json:"test_name,omitempty"`
 	Outcome  string `json:"outcome,omitempty"`
-	Output   string `json:"output,omitempty"`
-	Error    string `json:"error,omitempty"`
-	Stack    string `json:"stack,omitempty"`
+}
+type UnitTestLong struct {
+	Output string `json:"output,omitempty"`
+	Error  string `json:"error,omitempty"`
+	Stack  string `json:"stack,omitempty"`
 }
 type TestResults struct {
 	Name string     `json:"name"`
@@ -46,41 +47,12 @@ func IndexFiles(input string, extension string) []string {
 
 // this walks pth and writes the selected files (for now just jpg) to a json that is just string[]
 
-func Move(from, to string) {
-	os.RemoveAll(to)
-	os.Rename(from, to)
-}
+// recursive copy
 
-func copy(source, destination string) error {
-
-	var err error = filepath.Walk(source, func(path string, info os.FileInfo, err error) error {
-		var relPath string = strings.Replace(path, source, "", 1)
-		if relPath == "" {
-			return nil
-		}
-		if info.IsDir() {
-			return os.Mkdir(filepath.Join(destination, relPath), 0755)
-		} else {
-			var data, err1 = ioutil.ReadFile(filepath.Join(source, relPath))
-			if err1 != nil {
-				return err1
-			}
-			err = ioutil.WriteFile(filepath.Join(destination, relPath), data, 0666)
-			if err != nil {
-				panic(err)
-			}
-			return nil
-		}
-	})
-	if err != nil {
-		panic(err)
-	}
-	return err
-}
 func Copy(from, to string) {
 	os.RemoveAll(to)
 	os.Mkdir(to, os.ModePerm)
-	copy(from, to)
+	CopyFiles(from, to)
 }
 func TrxResults(path string) []UnitTestResult {
 	var t TestRun
@@ -98,15 +70,22 @@ func TrxResults(path string) []UnitTestResult {
 func Process(name string, dir string) {
 
 	var t TestResults
-	t.Name = name
-	t.File = IndexFiles(dir, ".jpg")
+	t.Name = name                    // can be anything, not used other than copied to json
+	t.File = IndexFiles(dir, ".jpg") // get rid of this? should embed the list of images into the (static) output.
+	if FileExists(dir + "/testResults.trx") {
+		os.Rename(dir+"/testResults.trx", dir+"/test_results.trx")
+	}
 	for _, x := range TrxResults(dir + "/test_results.trx") {
 		var o UnitTest
 		o.TestName = x.TestName
 		o.Outcome = x.Outcome
-		o.Output = x.Output.StdOut
-		o.Error = x.Output.ErrorInfo.Message
-		o.Stack = x.Output.ErrorInfo.StackTrace
+		var long UnitTestLong
+		long.Output = x.Output.StdOut
+		long.Error = x.Output.ErrorInfo.Message
+		long.Stack = x.Output.ErrorInfo.StackTrace
+		b, _ := json.Marshal(&long)
+		os.WriteFile(dir+"/images/"+x.TestName+".json", b, 0666)
+
 		t.Test = append(t.Test, o)
 	}
 
@@ -115,10 +94,15 @@ func Process(name string, dir string) {
 		panic(err)
 	}
 	os.WriteFile(dir+"/../test_results.json", b, 0666)
-
 }
+
+type Build struct {
+	TestDirectory string
+}
+
+/*
 func Nightly(name string) {
-	Move("../../test/imis/TestResults", "../results/public/TestResults")
+	MoveForce("../../test/imis/TestResults", "../results/public/TestResults")
 	Copy("../../test/imis/gherkin", "../results/public/gherkin")
 	Process(name, "../results/public/TestResults")
 }
@@ -129,3 +113,4 @@ func main() {
 		Nightly("v10")
 	}
 }
+*/

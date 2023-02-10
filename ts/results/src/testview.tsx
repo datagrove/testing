@@ -2,10 +2,10 @@ import { Component } from "solid-js";
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js/lib/core';
 import gherkin from 'highlight.js/lib/languages/gherkin';
-import { UnitTest, TestData, store} from "./data";
+import { UnitTest, TestData, store, UnitTestLong} from "./data";
 hljs.registerLanguage('gherkin', gherkin);
 
-import { createSignal, For, JSXElement, onMount, Show } from 'solid-js'
+import { createSignal, For, JSXElement, onMount, Show , createResource} from 'solid-js'
 import { render } from 'solid-js/web'
 import { Route, Routes, Router, A, useParams } from "@solidjs/router";
 import { Step } from './data'
@@ -26,17 +26,27 @@ export const CodeView: Component<{ code: string }> = (props) => {
         </pre>
     </div>
 }
-export const StackDump: Component<{ test: UnitTest }> = (props) => {
-    return <Show when={props.test.error}>
-    <div class="block mt-4  p-6 bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 ">
-        <h5 class="mb-2 text-2xl font-bold tracking-tight text-red-500">{props.test.test_name}</h5>
-        <div class='w-full overflow-x-scroll'>
-            <pre class="font-normal text-gray-700 dark:text-gray-400 overflow-wrap">
-                {props.test.error}
-            </pre>
-            <pre class="font-normal text-gray-700 dark:text-gray-400 overflow-wrap ">
-                {props.test.stack}
-            </pre></div></div></Show>
+
+//     <div class="block mt-4  p-6 bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 ">
+export const PreCard: Component<{ children: JSXElement }> = (props) => {
+    return <div class='block bg-white dark:bg-gray-800 rounded-md shadow-md p-4 mt-4'>
+        <pre  class="w-full overflow-y-auto  font-normal text-gray-700 dark:text-gray-400">{props.children}</pre>
+    </div>
+}
+export const Card: Component<{ children: JSXElement }> = (props) => {
+    return <div class='block break-all bg-white dark:bg-gray-800 rounded-md shadow-md p-4 mt-4'>
+        {props.children}
+    </div>
+}
+export const StackDump: Component<{ test: UnitTestLong }> = (props) => {
+    if (!props.test) {
+        return <div>No test found</div>
+    }
+    return <div>
+       <Show when={props.test.error}><PreCard>{props.test.error}</PreCard></Show>
+         <Show when={props.test.stack}><PreCard>{props.test.stack}</PreCard></Show>
+         <Show when ={props.test.output}><PreCard>{props.test.output}</PreCard></Show>
+    </div>
 }
 
 // in our og, we are defining a step as an image. the name of the step is the last piece of the path.
@@ -74,23 +84,37 @@ export const StepList: Component<{ test: TestData }> = (props) => {
 }
 
 export const A2 : Component<{children: JSXElement, href: string}> = (props) =>{
-    return <a  class='text-blue-700 hover:text-blue-600 cursor-pointer' {...props}>{props.children}</a>
+    return <a  class='text-blue-700 hover:underline hover:text-blue-600 cursor-pointer' {...props}>{props.children}</a>
 }
 
+const url = new URL(location.href);
+const hostRoot = `${url.protocol}//${url.hostname}:${url.port}`
 
 export const TestView: Component<{}> = (props) => {
+    const fetchUser = async (id: string)  => {
+        var path = '/TestResults/images/' + id + '.json'
+        console.log("path=", path)
+        var s = await (await fetch(path)).json()
+        console.log("test=",s)
+        return s as UnitTestLong;
+    }
+
     const params = useParams<{ id: string }>()
     const test = () : TestData|undefined => store()?.test.get(params.id)
     const feature = () =>test()?.gherkin?.file
     const test_name = ()=>test()?.test_name ?? ""
     console.log(test())
+    const [testDesc] = createResource(params.id, fetchUser);
     return <>
         <BackNav back={true}>{test_name()}</BackNav>
         
         <div class='p-2 px-4'>
         <Show when={test()} >
-            <p><A2 href={'/TestResults/images/'+test_name()+'.zip'}>Trace</A2></p>
-            <StackDump test={test()!.test} />
+        <p><A2 href={'/traceViewer/index.html?trace=' + hostRoot + '/TestResults/images/'+test_name()+'.zip'}>View Trace</A2></p><p> <A2 href={'/TestResults/images/'+test_name()+'.zip'}>Download Trace</A2></p>
+
+            <Show when={testDesc()} fallback={"Loading"}>
+            <StackDump test={testDesc()!} />
+            </Show>
             <StepList  test={test()!} />
             <ImageBrowser test={test()!} />
             <p class='break-words pt-4 text-2xl font-bold dark:text-white'>{feature()?.path??"No path specified"}</p>

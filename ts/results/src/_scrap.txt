@@ -1,3 +1,4 @@
+wrangler pages publish dist --project-name asi-datagrove --commit-dirty=true
 
 import './index.css'
 import { For, JSXElement } from 'solid-js'

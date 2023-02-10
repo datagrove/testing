@@ -59,18 +59,7 @@ const Errors: Component<{ test: TestData[] }> = (props) => {
                             return <tr onClick={() => navigate('/test/' + e.test_name)} class="cursor-pointer bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                                 <td class="px-6 py-4 font-medium text-gray-900  dark:text-white">
                                     <A class='text-red-500 whitespace-nowrap' href={"/test/" + e.test_name}>{e.test_name}</A>
-                                    <Switch>
-                                        <Match when={e.test.error.indexOf("= logs =")!=-1}>
-                                            <pre class=' w-full break-all'>
-                                                {e.test.error}
-                                            </pre> 
-                                        </Match>
-                                        <Match when={true}>
-                                            <p class='w-screen pr-96 break-all' >
-                                                {e.test.error}
-                                            </p>
-                                        </Match>
-                                    </Switch>
+
                                     
                                 </td>
                             </tr>
@@ -92,6 +81,21 @@ const tabs = [
 
 // }
 
+/*
+                                    <Switch>
+                                        <Match when={e.test.error.indexOf("= logs =")!=-1}>
+                                            <pre class=' w-full break-all'>
+                                                {e.test.error}
+                                            </pre> 
+                                        </Match>
+                                        <Match when={true}>
+                                            <p class='w-screen pr-96 break-all' >
+                                                {e.test.error}
+                                            </p>
+                                        </Match>
+                                    </Switch>
+*/
+
 // what's the best way to distingish test batches?
 // ideally they run at the same time to minimize length.
 // but it's not clear we can distinguish them. Can we add a prefix to the test?
@@ -99,8 +103,9 @@ const tabs = [
 function TestResults() {
     const passed = () => store()?.pass.length ?? 0
     const failed = () => store()?.fail.length ?? 0
+    const date = () => store()?.date ?? 0
     return <><BackNav back={false} >
-        V10 <a href='#passed'>{passed()} passed</a>, {failed()} failed
+        V10 <a href='#passed'>{passed()} passed</a>, {failed()} failed,  {date()}
     </BackNav>
         <Show when={store()}>
             <H2>Failed</H2>

@@ -4,6 +4,9 @@ import { createSignal } from 'solid-js'
 export interface UnitTest {
     test_name: string
     outcome: string
+
+}
+export interface UnitTestLong {
     output: string
     error: string
     stack: string
@@ -26,6 +29,7 @@ export interface TestData {
 }
 export interface Store {
     name: string
+    date: string
     test: Map<string, TestData>
     pass: TestData[]
     fail: TestData[]
@@ -65,13 +69,14 @@ export interface Gherkin {
 interface TestResults {
     file: string[]
     test: UnitTest[]
+    date: string
     name: string
 }
 
 async function buildTests(): Promise<Store> {
 
     var tj : TestResults = await (await fetch('/test_results.json')).json() 
-    const ghx : Gherkin = await (await fetch(`/gherkin/v10.cs.json`)).json()
+    const ghx : Gherkin = await (await fetch(`/TestResults/v10.json`)).json()
 
     // we should maybe do this in the go program? make a map of tests.
     async function testLog(): Promise<Map<string, TestData>> {
@@ -129,6 +134,7 @@ async function buildTests(): Promise<Store> {
     return {
         name: tj.name,
         test: tests,
+        date: tj.date,
         pass: v.filter(e => e.test.outcome=="Passed").sort((a,b)=>a.test_name.localeCompare(b.test_name)),
         fail: v.filter(e => e.test.outcome=="Failed").sort((a,b)=>a.test_name.localeCompare(b.test_name)),
     };
