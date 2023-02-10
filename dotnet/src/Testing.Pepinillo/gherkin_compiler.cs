@@ -379,7 +379,7 @@ public class GherkinCompiler
                         methods.WriteLine(bg.TestMethod());
                         methods.WriteLine($"public async Task {sname}{suffix}()");
                         methods.WriteLine("{");
-                        methods.WriteLine("try {");
+                       // methods.WriteLine("try {");
                         methods.Indent++;
                         methods.WriteLine($"await using (var context = await {StepState}.create(TestContext!)){{");
 
@@ -396,15 +396,14 @@ public class GherkinCompiler
                             appendStep(st, tx, methods);
                         }
 
-                        methods.WriteLine("}");
+                        methods.WriteLine("}"); // end using
                         methods.Indent--;
-                        methods.WriteLine("} catch(Exception e){");
-                        methods.Indent++;
-                        methods.WriteLine("throw e;");
-                        methods.Indent--;
-                        methods.Write("}");
-
-                        methods.Indent--;
+                        // methods.WriteLine("} catch(Exception e){");
+                        // methods.Indent++;
+                        // methods.WriteLine("throw e;");
+                        // methods.Indent--;
+                        // methods.Write("}");
+                        // methods.Indent--;
                         methods.WriteLine("}");
                         exn++;
                     };
