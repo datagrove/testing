@@ -395,7 +395,7 @@ public class GherkinCompiler
                             }
                             appendStep(st, tx, methods);
                         }
-
+                        methods.Indent--;
                         methods.WriteLine("}"); // end using
                         methods.Indent--;
                         // methods.WriteLine("} catch(Exception e){");
