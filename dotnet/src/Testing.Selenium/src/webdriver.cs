@@ -126,7 +126,7 @@ public class By
 
     public static By PartialLinkText(string partialLinkTextToFind)
     {
-        return new By($"text={partialLinkTextToFind}");
+        return new By($"a:has-text(\"{partialLinkTextToFind}\")");
     }
 
     public static By TagName(string tagNameToFind)

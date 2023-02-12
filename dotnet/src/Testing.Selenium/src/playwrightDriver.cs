@@ -195,6 +195,7 @@ ISearchContext, IJavaScriptExecutor, ITakesScreenshot, ITargetLocator, IDisposab
             {
                 Force = force
             };
+            await getLocator(locator).ScrollIntoViewIfNeededAsync();
             await getLocator(locator).ClickAsync(opt);
             return true;
         });
